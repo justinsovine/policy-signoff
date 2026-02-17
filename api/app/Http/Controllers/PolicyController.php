@@ -44,10 +44,7 @@ class PolicyController extends Controller
             'due_date' => ['required', 'date', 'after_or_equal:today'],
         ]);
 
-        $policy = Policy::create([
-            ...$validated,
-            'created_by' => $request->user()->id,
-        ]);
+        $policy = $request->user()->policies()->create($validated);
 
         $policy->load('creator');
 
