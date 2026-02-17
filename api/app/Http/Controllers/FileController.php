@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Policy;
 use Aws\S3\S3Client;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class FileController extends Controller
@@ -24,20 +23,16 @@ class FileController extends Controller
         $ext = pathinfo($validated['filename'], PATHINFO_EXTENSION);
         $key = 'policies/' . Str::uuid() . '.' . strtolower($ext);
 
-        $client = app(S3Client::class);
-        $bucket = config('filesystems.disks.s3.bucket');
+        $disk = config('filesystems.disks.s3');
+        $client = $this->makeS3Client($disk);
 
         $command = $client->getCommand('PutObject', [
-            'Bucket' => $bucket,
+            'Bucket' => $disk['bucket'],
             'Key' => $key,
             'ContentType' => $validated['content_type'],
         ]);
 
-        $presignedRequest = $client->createPresignedRequest($command, '+15 minutes');
-        $internalUrl = (string) $presignedRequest->getUri();
-
-        $externalBase = rtrim(config('filesystems.disks.s3.url'), '/');
-        $uploadUrl = preg_replace('#^https?://[^/]+#', $externalBase, $internalUrl);
+        $uploadUrl = (string) $client->createPresignedRequest($command, '+15 minutes')->getUri();
 
         $policy->update([
             'file_path' => $key,
@@ -56,14 +51,34 @@ class FileController extends Controller
             return response()->json(['message' => 'No file attached'], 404);
         }
 
-        $internalUrl = Storage::disk('s3')->temporaryUrl($policy->file_path, now()->addMinutes(60));
+        $disk = config('filesystems.disks.s3');
+        $client = $this->makeS3Client($disk);
 
-        $externalBase = rtrim(config('filesystems.disks.s3.url'), '/');
-        $downloadUrl = preg_replace('#^https?://[^/]+#', $externalBase, $internalUrl);
+        $command = $client->getCommand('GetObject', [
+            'Bucket' => $disk['bucket'],
+            'Key'    => $policy->file_path,
+        ]);
+        $downloadUrl = (string) $client->createPresignedRequest($command, '+60 minutes')->getUri();
 
         return response()->json([
             'download_url' => $downloadUrl,
             'file_name' => $policy->file_name,
+        ]);
+    }
+
+    // Use the external URL (AWS_URL) as the S3 endpoint so presigned URLs are
+    // signed for the host the browser will actually send requests to.
+    private function makeS3Client(array $disk): S3Client
+    {
+        return new S3Client([
+            'version'                 => 'latest',
+            'region'                  => $disk['region'],
+            'endpoint'                => $disk['url'],
+            'use_path_style_endpoint' => $disk['use_path_style_endpoint'] ?? true,
+            'credentials'             => [
+                'key'    => $disk['key'],
+                'secret' => $disk['secret'],
+            ],
         ]);
     }
 }
