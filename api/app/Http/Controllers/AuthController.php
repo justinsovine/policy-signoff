@@ -24,7 +24,11 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
-        return response()->json($user, 201);
+        return response()->json([
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+        ], 201);
     }
 
     public function login(Request $request): JsonResponse
@@ -42,7 +46,13 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
-        return response()->json(Auth::user());
+        $user = Auth::user();
+
+        return response()->json([
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+        ]);
     }
 
     public function logout(Request $request): JsonResponse
