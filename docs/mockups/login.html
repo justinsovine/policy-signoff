@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In — PolicySignoff</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            serif: ['Newsreader', 'Georgia', 'serif'],
+            sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    .brand-panel {
+      background:
+        radial-gradient(ellipse at 20% 80%, rgba(39, 39, 42, 1) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(63, 63, 70, 0.6) 0%, transparent 50%),
+        linear-gradient(160deg, #18181b 0%, #09090b 100%);
+    }
+    .brand-panel::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      pointer-events: none;
+    }
+    input:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px #18181b;
+    }
+  </style>
+</head>
+<body class="font-sans text-zinc-900 antialiased">
+
+  <div class="min-h-screen flex flex-col lg:flex-row">
+
+    <!-- Left: Brand Panel -->
+    <div class="brand-panel relative hidden lg:flex lg:w-1/2 flex-col justify-between p-12 text-white overflow-hidden">
+      <div class="relative z-10">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center">
+            <span class="text-sm font-bold tracking-tight">PS</span>
+          </div>
+          <span class="font-serif text-xl font-medium tracking-tight">PolicySignoff</span>
+        </div>
+      </div>
+
+      <div class="relative z-10 max-w-md">
+        <blockquote class="font-serif text-2xl leading-relaxed italic text-zinc-300">
+          "Compliance isn't paperwork — it's the foundation of organizational trust."
+        </blockquote>
+        <div class="mt-6 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center text-sm font-semibold">JA</div>
+          <div>
+            <p class="text-sm font-medium text-zinc-200">Jane Admin</p>
+            <p class="text-sm text-zinc-500">Head of Compliance</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Login Form -->
+    <div class="flex-1 flex items-center justify-center p-6 sm:p-12">
+      <div class="w-full max-w-sm">
+
+        <!-- Mobile brand mark -->
+        <div class="lg:hidden mb-10 flex items-center gap-3">
+          <div class="w-9 h-9 rounded-lg bg-zinc-900 flex items-center justify-center">
+            <span class="text-sm font-bold tracking-tight text-white">PS</span>
+          </div>
+          <span class="font-serif text-xl font-medium tracking-tight">PolicySignoff</span>
+        </div>
+
+        <h1 class="font-serif text-3xl font-semibold tracking-tight">Welcome back</h1>
+        <p class="mt-2 text-sm text-zinc-500">Sign in to your account to continue</p>
+
+        <form class="mt-8 space-y-5">
+          <div>
+            <label class="block text-sm font-medium text-zinc-700 mb-1.5" for="email">Email address</label>
+            <input
+              id="email"
+              type="email"
+              placeholder="name@company.com"
+              class="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-white placeholder:text-zinc-400 transition-shadow"
+            >
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="text-sm font-medium text-zinc-700" for="password">Password</label>
+            </div>
+            <input
+              id="password"
+              type="password"
+              placeholder="Enter your password"
+              class="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-white placeholder:text-zinc-400 transition-shadow"
+            >
+          </div>
+
+          <button
+            type="submit"
+            class="w-full h-10 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-zinc-800 transition-colors"
+          >
+            Sign in
+          </button>
+        </form>
+
+        <p class="mt-6 text-center text-sm text-zinc-500">
+          Don't have an account?
+          <a href="register.html" class="font-medium text-zinc-900 hover:underline">Create one</a>
+        </p>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div class="max-w-sm mx-auto px-6">
+    <div class="border-t-4 border-dashed border-zinc-300 my-16 pt-8">
+      <p class="text-center text-sm font-semibold text-zinc-400 uppercase tracking-widest mb-8">STATE: Session Expired</p>
+    </div>
+  </div>
+
+  <div class="flex justify-center p-6 sm:p-12">
+    <div class="w-full max-w-sm">
+
+      <div class="border border-amber-200 bg-amber-50 rounded-lg p-3 mb-6">
+        <p class="text-sm text-amber-800">Your session has expired. Please sign in again.</p>
+      </div>
+
+      <h1 class="font-serif text-3xl font-semibold tracking-tight">Welcome back</h1>
+      <p class="mt-2 text-sm text-zinc-500">Sign in to your account to continue</p>
+
+      <form class="mt-8 space-y-5">
+        <div>
+          <label class="block text-sm font-medium text-zinc-700 mb-1.5" for="email-expired">Email address</label>
+          <input
+            id="email-expired"
+            type="email"
+            placeholder="name@company.com"
+            class="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-white placeholder:text-zinc-400 transition-shadow"
+          >
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-sm font-medium text-zinc-700" for="password-expired">Password</label>
+          </div>
+          <input
+            id="password-expired"
+            type="password"
+            placeholder="Enter your password"
+            class="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-white placeholder:text-zinc-400 transition-shadow"
+          >
+        </div>
+
+        <button
+          type="submit"
+          class="w-full h-10 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-zinc-800 transition-colors"
+        >
+          Sign in
+        </button>
+      </form>
+
+      <p class="mt-6 text-center text-sm text-zinc-500">
+        Don't have an account?
+        <a href="register.html" class="font-medium text-zinc-900 hover:underline">Create one</a>
+      </p>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <div class="max-w-sm mx-auto px-6">
+    <div class="border-t-4 border-dashed border-zinc-300 my-16 pt-8">
+      <p class="text-center text-sm font-semibold text-zinc-400 uppercase tracking-widest mb-8">STATE: Validation Error</p>
+    </div>
+  </div>
+
+  <div class="flex justify-center p-6 sm:p-12 pb-16">
+    <div class="w-full max-w-sm">
+
+      <h1 class="font-serif text-3xl font-semibold tracking-tight">Welcome back</h1>
+      <p class="mt-2 text-sm text-zinc-500">Sign in to your account to continue</p>
+
+      <form class="mt-8 space-y-5">
+        <div>
+          <label class="block text-sm font-medium text-zinc-700 mb-1.5" for="email-error">Email address</label>
+          <input
+            id="email-error"
+            type="email"
+            placeholder="name@company.com"
+            class="w-full h-10 px-3 text-sm border border-red-300 rounded-lg bg-white placeholder:text-zinc-400 transition-shadow"
+            style="box-shadow: 0 0 0 1px rgb(252 165 165);"
+          >
+          <p class="mt-1.5 text-sm text-red-600">These credentials do not match our records.</p>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-sm font-medium text-zinc-700" for="password-error">Password</label>
+          </div>
+          <input
+            id="password-error"
+            type="password"
+            placeholder="Enter your password"
+            class="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-white placeholder:text-zinc-400 transition-shadow"
+          >
+        </div>
+
+        <button
+          type="submit"
+          class="w-full h-10 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-zinc-800 transition-colors"
+        >
+          Sign in
+        </button>
+      </form>
+
+      <p class="mt-6 text-center text-sm text-zinc-500">
+        Don't have an account?
+        <a href="register.html" class="font-medium text-zinc-900 hover:underline">Create one</a>
+      </p>
+
+    </div>
+  </div>
+
+</body>
+</html>
