@@ -54,6 +54,11 @@ The project runs via Docker Compose. See `docs/client-guide.md` for full compose
 
 **Production domains:** `{react,alpine,vue,api,minio}.policysignoff.justinsovine.com`
 
+## Workflow
+
+- **Commit and push automatically** — after completing implementation work, always commit and push without waiting to be asked
+- **PR text** — when creating PRs, write a proper title and body: a short summary paragraph explaining the change and its rationale, followed by a bullet list of what was changed and why
+
 ## Common Gotchas
 
 - CORS errors during local dev → check API's CORS config and Sanctum stateful domains, not client code
