@@ -103,7 +103,7 @@ async function api(method, path, body = null) {
     options.headers['Content-Type'] = 'application/json';
     options.body = JSON.stringify(body);
   }
-  const res = await fetch(`https://api.policysignoff.justinsovine.com${path}`, options);
+  const res = await fetch(`${import.meta.env.VITE_API_URL}${path}`, options);
   if (!res.ok) {
     const err = await res.json();
     throw err;
@@ -687,7 +687,7 @@ CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
 
 **client-react/Dockerfile.dev** (and same for client-vue):
 ```dockerfile
-FROM node:20-alpine
+FROM node:22-alpine
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
@@ -737,7 +737,7 @@ services:
       APP_ENV: production
       APP_URL: https://api.policysignoff.justinsovine.com
       SESSION_DOMAIN: .justinsovine.com
-      SANCTUM_STATEFUL_DOMAINS: "react.policysignoff.justinsovine.com,alpine.policysignoff.justinsovine.com,vue.policysignoff.justinsovine.com"
+      SANCTUM_STATEFUL_DOMAINS: "policysignoff.justinsovine.com,alpine.policysignoff.justinsovine.com,vue.policysignoff.justinsovine.com"
 
   client-react:
     build:
@@ -777,12 +777,12 @@ services:
 
 **client-react/Dockerfile.prod** (and same pattern for client-vue):
 ```dockerfile
-FROM node:20-alpine AS build
+FROM node:22-alpine AS build
 WORKDIR /app
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 COPY . .
-RUN VITE_API_URL=https://api.policysignoff.justinsovine.com npm run build
+RUN npm run build
 
 FROM nginx:alpine
 COPY --from=build /app/dist /usr/share/nginx/html
@@ -805,7 +805,7 @@ server {
 
 server {
     listen 80;
-    server_name react.policysignoff.justinsovine.com;
+    server_name policysignoff.justinsovine.com;
     location / {
         proxy_pass http://client-react:80;
     }

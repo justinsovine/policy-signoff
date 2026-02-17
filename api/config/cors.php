@@ -15,7 +15,7 @@ return [
     |
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie', 'login', 'register', 'logout', 'user'],
 
     'allowed_methods' => ['*'],
 
@@ -23,7 +23,7 @@ return [
         'http://localhost:3001',
         'http://localhost:3002',
         'http://localhost:3003',
-        'https://react.policysignoff.justinsovine.com',
+        'https://policysignoff.justinsovine.com',
         'https://alpine.policysignoff.justinsovine.com',
         'https://vue.policysignoff.justinsovine.com',
     ],
