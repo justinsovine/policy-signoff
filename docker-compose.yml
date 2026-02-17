@@ -41,6 +41,20 @@ services:
     networks:
       - policysignoff
 
+  client-react:
+    build:
+      context: ./client-react
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3001:5173"
+    volumes:
+      - ./client-react:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    networks:
+      - policysignoff
+
 volumes:
   mysql_data:
   minio_data:
