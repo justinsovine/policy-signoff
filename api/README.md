@@ -1,59 +1,105 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# PolicySignoff API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel 12 REST API with Sanctum cookie-based SPA authentication and MinIO/S3 file storage.
 
-## About Laravel
+## Stack
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **PHP 8.4** / **Laravel 12**
+- **MySQL 8** via Docker
+- **Laravel Sanctum** — cookie-based session auth (no tokens)
+- **MinIO** — S3-compatible object storage for policy documents
+- **Presigned URLs** — file uploads go directly from browser to MinIO, never through Laravel
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Setup
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Runs inside Docker. From the repo root:
 
-## Learning Laravel
+```bash
+docker compose up -d
+docker compose exec api php artisan migrate --seed
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+Create the MinIO bucket (first run only):
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```bash
+docker compose exec minio mc alias set local http://localhost:9000 minioadmin minioadmin
+docker compose exec minio mc mb local/policysignoff
+```
 
-## Laravel Sponsors
+API is available at **http://localhost:8000**.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Copy `.env.example` to `.env` if starting fresh — the example is pre-configured for the Docker Compose environment.
 
-### Premium Partners
+## Commands
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```bash
+# Run tests (PHPUnit, SQLite in-memory)
+docker compose exec api composer test
 
-## Contributing
+# Re-seed the database
+docker compose exec api php artisan db:seed
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+# Run fresh migrations and seed
+docker compose exec api php artisan migrate:fresh --seed
+```
 
-## Code of Conduct
+## Routes
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Auth routes (no `/api` prefix, in `routes/web.php`):
 
-## Security Vulnerabilities
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/register` | Register a new user |
+| `POST` | `/login` | Authenticate and set session cookie |
+| `POST` | `/logout` | Clear session |
+| `GET` | `/user` | Get authenticated user |
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Protected routes (prefixed `/api`, require `auth:sanctum`):
 
-## License
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/policies` | List all policies |
+| `POST` | `/api/policies` | Create a policy |
+| `GET` | `/api/policies/{id}` | Policy detail with sign-off summary |
+| `POST` | `/api/policies/{id}/signoff` | Sign off on a policy |
+| `POST` | `/api/policies/{id}/upload-url` | Get a presigned S3 upload URL |
+| `GET` | `/api/policies/{id}/download-url` | Get a presigned S3 download URL |
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Full request/response documentation: [`../docs/api-spec.md`](../docs/api-spec.md)
+
+## Auth flow
+
+All API clients follow the same pattern:
+
+1. `GET /sanctum/csrf-cookie` — sets the `XSRF-TOKEN` cookie
+2. `POST /login` with `X-XSRF-TOKEN` header — sets the session cookie
+3. All subsequent requests include both cookies (`credentials: 'include'`)
+
+Requests must come from a domain listed in `SANCTUM_STATEFUL_DOMAINS` and include a matching `Origin` or `Referer` header — this is how Sanctum identifies stateful (cookie-based) requests.
+
+## File upload flow
+
+1. Client calls `POST /api/policies/{id}/upload-url` with `filename` and `content_type`
+2. API generates a presigned S3 `PutObject` URL (15-minute expiry) and updates the policy record with the file metadata
+3. Client PUTs the file directly to MinIO using the presigned URL — no Laravel involvement
+4. Client calls `GET /api/policies/{id}/download-url` to get a presigned `GetObject` URL for viewing
+
+Presigned URLs are signed against `AWS_URL` (the external MinIO hostname) so signatures remain valid when the browser uses them. `AWS_ENDPOINT` (the internal Docker hostname) is used only for server-side Laravel→MinIO communication.
+
+## Key files
+
+```
+app/Http/Controllers/
+  AuthController.php      — register, login, logout, user
+  PolicyController.php    — index, store, show
+  SignoffController.php   — store (with 409 on duplicate)
+  FileController.php      — uploadUrl, downloadUrl
+
+database/
+  migrations/             — users, policies, signoffs
+  seeders/DatabaseSeeder.php  — 6 users, 4 policies, realistic sign-offs
+
+config/
+  cors.php                — allowed origins, auth route paths
+  sanctum.php             — stateful domains from SANCTUM_STATEFUL_DOMAINS env
+```

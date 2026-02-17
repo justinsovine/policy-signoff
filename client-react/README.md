@@ -1,16 +1,80 @@
-# React + Vite
+# PolicySignoff — React Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + Vite + React Router frontend for the PolicySignoff API. Runs at [policysignoff.justinsovine.com](https://policysignoff.justinsovine.com) in production.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React 19** + **Vite 7**
+- **React Router** for client-side routing
+- **Tailwind CSS v4** for styling
+- **Newsreader** (display) + **Plus Jakarta Sans** (body) from Google Fonts
 
-## React Compiler
+## Dev setup
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm install
+npm run dev        # http://localhost:5173
+```
 
-## Expanding the ESLint configuration
+Or via Docker Compose from the repo root (runs on port 3001):
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+docker compose up -d client-react
+```
+
+The app expects the API at `http://localhost:8000` by default. Override via `.env`:
+
+```
+VITE_API_URL=http://localhost:8000
+```
+
+Make sure the API is running and the database is seeded before logging in. See the [root README](../README.md) for full setup instructions.
+
+## Build
+
+```bash
+npm run build      # outputs to dist/
+npm run preview    # preview the production build locally
+```
+
+`VITE_API_URL` is baked into the bundle at build time. The production build reads from `.env.production` (committed), which points to `https://api.policysignoff.justinsovine.com`.
+
+## Structure
+
+```
+src/
+  api.js          — getCookie() + api() fetch wrapper (Sanctum cookie auth)
+  main.jsx        — entry point, React Router setup
+  App.jsx         — auth state, protected routes
+  pages/
+    Login.jsx     — login + register forms, session-expired banner
+    Dashboard.jsx — policy list with status badges
+    Policy.jsx    — policy detail, sign-off button, sign-off summary
+    Create.jsx    — create policy form with file upload
+  components/
+    StatusBadge.jsx   — signed / pending / overdue pill
+    SignoffList.jsx   — per-user sign-off status table
+```
+
+## API integration
+
+All requests go through `src/api.js`:
+
+```js
+import { api } from './api'
+
+// GET
+const policies = await api('GET', '/api/policies')
+
+// POST with body
+const policy = await api('POST', '/api/policies', { title, description, due_date })
+
+// File upload (two steps)
+const { upload_url } = await api('POST', `/api/policies/${id}/upload-url`, {
+  filename: file.name,
+  content_type: file.type,
+})
+await fetch(upload_url, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file })
+```
+
+Auth is cookie-based via Laravel Sanctum — no tokens or localStorage. The `api()` helper handles CSRF automatically by reading the `XSRF-TOKEN` cookie.
