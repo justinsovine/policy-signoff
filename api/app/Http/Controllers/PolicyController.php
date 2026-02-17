@@ -78,7 +78,7 @@ class PolicyController extends Controller
             if ($signoff) {
                 return [
                     'user' => $u->name,
-                    'signed_at' => $signoff->signed_at->utc()->toIso8601String(),
+                    'signed_at' => $signoff->signed_at->utc()->toIso8601ZuluString(),
                     'overdue' => false,
                 ];
             }

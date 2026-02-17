@@ -24,7 +24,7 @@ class SignoffController extends Controller
 
         return response()->json([
             'message' => 'Signed off successfully',
-            'signed_at' => $signoff->signed_at->utc()->toIso8601String(),
+            'signed_at' => $signoff->signed_at->utc()->toIso8601ZuluString(),
         ]);
     }
 }
