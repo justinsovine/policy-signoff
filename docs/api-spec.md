@@ -165,13 +165,13 @@ The API uses Sanctum cookie-based SPA authentication. The frontend apps live on 
 **.env:**
 ```
 SESSION_DOMAIN=.justinsovine.com
-SANCTUM_STATEFUL_DOMAINS=react.policysignoff.justinsovine.com,alpine.policysignoff.justinsovine.com,vue.policysignoff.justinsovine.com
+SANCTUM_STATEFUL_DOMAINS=policysignoff.justinsovine.com,alpine.policysignoff.justinsovine.com,vue.policysignoff.justinsovine.com
 ```
 
 **config/cors.php:**
 ```php
 'allowed_origins' => [
-    'https://react.policysignoff.justinsovine.com',
+    'https://policysignoff.justinsovine.com',
     'https://alpine.policysignoff.justinsovine.com',
     'https://vue.policysignoff.justinsovine.com',
 ],
