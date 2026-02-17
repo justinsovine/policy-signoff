@@ -24,29 +24,15 @@ class FileController extends Controller
         $key = 'policies/' . Str::uuid() . '.' . strtolower($ext);
 
         $disk = config('filesystems.disks.s3');
-
-        // Use the external URL as the endpoint so presigned URLs are signed
-        // for the host the browser will actually send the request to.
-        $client = new S3Client([
-            'version'                 => 'latest',
-            'region'                  => $disk['region'],
-            'endpoint'                => $disk['url'],
-            'use_path_style_endpoint' => $disk['use_path_style_endpoint'] ?? true,
-            'credentials'             => [
-                'key'    => $disk['key'],
-                'secret' => $disk['secret'],
-            ],
-        ]);
-        $bucket = $disk['bucket'];
+        $client = $this->makeS3Client($disk);
 
         $command = $client->getCommand('PutObject', [
-            'Bucket' => $bucket,
+            'Bucket' => $disk['bucket'],
             'Key' => $key,
             'ContentType' => $validated['content_type'],
         ]);
 
-        $presignedRequest = $client->createPresignedRequest($command, '+15 minutes');
-        $uploadUrl = (string) $presignedRequest->getUri();
+        $uploadUrl = (string) $client->createPresignedRequest($command, '+15 minutes')->getUri();
 
         $policy->update([
             'file_path' => $key,
@@ -66,16 +52,7 @@ class FileController extends Controller
         }
 
         $disk = config('filesystems.disks.s3');
-        $client = new S3Client([
-            'version'                 => 'latest',
-            'region'                  => $disk['region'],
-            'endpoint'                => $disk['url'],
-            'use_path_style_endpoint' => $disk['use_path_style_endpoint'] ?? true,
-            'credentials'             => [
-                'key'    => $disk['key'],
-                'secret' => $disk['secret'],
-            ],
-        ]);
+        $client = $this->makeS3Client($disk);
 
         $command = $client->getCommand('GetObject', [
             'Bucket' => $disk['bucket'],
@@ -86,6 +63,22 @@ class FileController extends Controller
         return response()->json([
             'download_url' => $downloadUrl,
             'file_name' => $policy->file_name,
+        ]);
+    }
+
+    // Use the external URL (AWS_URL) as the S3 endpoint so presigned URLs are
+    // signed for the host the browser will actually send requests to.
+    private function makeS3Client(array $disk): S3Client
+    {
+        return new S3Client([
+            'version'                 => 'latest',
+            'region'                  => $disk['region'],
+            'endpoint'                => $disk['url'],
+            'use_path_style_endpoint' => $disk['use_path_style_endpoint'] ?? true,
+            'credentials'             => [
+                'key'    => $disk['key'],
+                'secret' => $disk['secret'],
+            ],
         ]);
     }
 }

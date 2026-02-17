@@ -2,6 +2,7 @@
 # PolicySignoff API curl smoke test
 # Usage: ./test-api.sh [email] [password]
 # Defaults to alice@example.com / password
+# Requires: curl, python3
 
 set -e
 
@@ -13,17 +14,26 @@ COOKIE_JAR=$(mktemp)
 
 header() { echo ""; echo "━━━ $1 ━━━"; }
 check() { echo "✓ $1"; }
-fail() { echo "✗ FAIL: $1"; exit 1; }
+fail() { echo "✗ FAIL: $1"; rm -f "$COOKIE_JAR"; exit 1; }
 
 get_xsrf() {
   python3 -c "
-import urllib.parse, re
+import urllib.parse
 with open('$COOKIE_JAR') as f:
     for line in f:
         if 'XSRF-TOKEN' in line and 'session' not in line:
             print(urllib.parse.unquote(line.strip().split()[-1]))
             break
 "
+}
+
+assert_key() {
+  local json="$1" key="$2" label="$3"
+  if echo "$json" | python3 -c "import sys,json; d=json.load(sys.stdin); sys.exit(0 if '$key' in d else 1)" 2>/dev/null; then
+    check "$label"
+  else
+    fail "$label — missing '$key' in response: $json"
+  fi
 }
 
 # ── 1. CSRF cookie ────────────────────────────────────────────────────────────
@@ -44,16 +54,18 @@ REG=$(curl -s -b "$COOKIE_JAR" -c "$COOKIE_JAR" \
   -H "Origin: $ORIGIN" -H "Referer: $ORIGIN/" \
   -d "{\"name\":\"Test User\",\"email\":\"test$TS@example.com\",\"password\":\"password\",\"password_confirmation\":\"password\"}")
 echo "$REG" | python3 -m json.tool
-echo "$REG" | python3 -c "import sys,json; d=json.load(sys.stdin); assert 'id' in d" && check "Register returns user"
+assert_key "$REG" "id" "Register returns user"
 XSRF=$(get_xsrf)
 
 # ── 3. Logout ─────────────────────────────────────────────────────────────────
 header "POST /logout"
-curl -s -b "$COOKIE_JAR" -c "$COOKIE_JAR" \
+LOGOUT_CODE=$(curl -s -o /dev/null -w "%{http_code}" -b "$COOKIE_JAR" -c "$COOKIE_JAR" \
   -X POST "$BASE/logout" \
   -H "X-XSRF-TOKEN: $XSRF" \
   -H "Origin: $ORIGIN" -H "Referer: $ORIGIN/" \
-  -H "Accept: application/json" | python3 -m json.tool
+  -H "Accept: application/json")
+echo "HTTP $LOGOUT_CODE"
+[ "$LOGOUT_CODE" = "200" ] && check "Logout returns 200" || fail "Expected 200, got $LOGOUT_CODE"
 XSRF=$(get_xsrf)
 
 # ── 4. Login ──────────────────────────────────────────────────────────────────
@@ -65,16 +77,18 @@ LOGIN=$(curl -s -b "$COOKIE_JAR" -c "$COOKIE_JAR" \
   -H "Origin: $ORIGIN" -H "Referer: $ORIGIN/" \
   -d "{\"email\":\"$EMAIL\",\"password\":\"$PASS\"}")
 echo "$LOGIN" | python3 -m json.tool
-echo "$LOGIN" | python3 -c "import sys,json; d=json.load(sys.stdin); assert 'id' in d" && check "Login returns user"
+assert_key "$LOGIN" "id" "Login returns user"
 XSRF=$(get_xsrf)
 
 # ── 5. GET /user ──────────────────────────────────────────────────────────────
 header "GET /user"
-curl -s -b "$COOKIE_JAR" -c "$COOKIE_JAR" \
+USER_RESP=$(curl -s -b "$COOKIE_JAR" -c "$COOKIE_JAR" \
   -H "X-XSRF-TOKEN: $XSRF" \
   -H "Origin: $ORIGIN" -H "Referer: $ORIGIN/" \
   -H "Accept: application/json" \
-  "$BASE/user" | python3 -m json.tool && check "GET /user"
+  "$BASE/user")
+echo "$USER_RESP" | python3 -m json.tool
+assert_key "$USER_RESP" "id" "GET /user returns user"
 
 # ── 6. List policies ──────────────────────────────────────────────────────────
 header "GET /api/policies"
@@ -86,16 +100,17 @@ POLICIES=$(curl -s -b "$COOKIE_JAR" -c "$COOKIE_JAR" \
 echo "$POLICIES" | python3 -m json.tool
 POLICY_COUNT=$(echo "$POLICIES" | python3 -c "import sys,json; print(len(json.load(sys.stdin)))")
 [ "$POLICY_COUNT" -ge 1 ] && check "Got $POLICY_COUNT policies" || fail "No policies returned"
+FIRST_ID=$(echo "$POLICIES" | python3 -c "import sys,json; print(json.load(sys.stdin)[0]['id'])")
 
-# ── 7. Policy detail ──────────────────────────────────────────────────────────
-header "GET /api/policies/1"
+# ── 7. Policy detail (uses first ID from list — no hardcoding) ────────────────
+header "GET /api/policies/$FIRST_ID"
 DETAIL=$(curl -s -b "$COOKIE_JAR" -c "$COOKIE_JAR" \
   -H "X-XSRF-TOKEN: $XSRF" \
   -H "Origin: $ORIGIN" -H "Referer: $ORIGIN/" \
   -H "Accept: application/json" \
-  "$BASE/api/policies/1")
+  "$BASE/api/policies/$FIRST_ID")
 echo "$DETAIL" | python3 -m json.tool
-echo "$DETAIL" | python3 -c "import sys,json; d=json.load(sys.stdin); assert 'signoff_summary' in d" && check "Policy detail has signoff_summary"
+assert_key "$DETAIL" "signoff_summary" "Policy detail has signoff_summary"
 
 # ── 8. Create policy ──────────────────────────────────────────────────────────
 header "POST /api/policies"
@@ -107,8 +122,8 @@ NEW_POLICY=$(curl -s -b "$COOKIE_JAR" -c "$COOKIE_JAR" \
   -H "Accept: application/json" \
   -d '{"title":"Test Policy","description":"Created by curl test","due_date":"2026-12-31"}')
 echo "$NEW_POLICY" | python3 -m json.tool
-NEW_ID=$(echo "$NEW_POLICY" | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
-check "Created policy id=$NEW_ID"
+NEW_ID=$(echo "$NEW_POLICY" | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])" 2>/dev/null || echo "")
+[ -n "$NEW_ID" ] && check "Created policy id=$NEW_ID" || fail "Create policy response missing 'id'"
 XSRF=$(get_xsrf)
 
 # ── 9. Sign off ───────────────────────────────────────────────────────────────
@@ -119,7 +134,7 @@ SIGNOFF=$(curl -s -b "$COOKIE_JAR" -c "$COOKIE_JAR" \
   -H "Origin: $ORIGIN" -H "Referer: $ORIGIN/" \
   -H "Accept: application/json")
 echo "$SIGNOFF" | python3 -m json.tool
-echo "$SIGNOFF" | python3 -c "import sys,json; d=json.load(sys.stdin); assert 'signed_at' in d" && check "Sign-off returns signed_at"
+assert_key "$SIGNOFF" "signed_at" "Sign-off returns signed_at"
 XSRF=$(get_xsrf)
 
 # ── 10. Duplicate sign-off → 409 ─────────────────────────────────────────────
@@ -144,11 +159,11 @@ UPLOAD=$(curl -s -b "$COOKIE_JAR" -c "$COOKIE_JAR" \
   -d '{"filename":"test.pdf","content_type":"application/pdf"}')
 echo "$UPLOAD" | python3 -m json.tool
 UPLOAD_URL=$(echo "$UPLOAD" | python3 -c "import sys,json; print(json.load(sys.stdin)['upload_url'])" 2>/dev/null || echo "")
-[ -n "$UPLOAD_URL" ] && check "Got presigned upload URL" || fail "No upload_url in response"
+[ -n "$UPLOAD_URL" ] && check "Got presigned upload URL" || fail "No upload_url in response: $UPLOAD"
 XSRF=$(get_xsrf)
 
 # ── 12. Upload file directly to MinIO via presigned URL ───────────────────────
-header "PUT $UPLOAD_URL (direct to MinIO)"
+header "PUT (direct to MinIO)"
 echo "hello pdf" > /tmp/test-upload.pdf
 HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
   -X PUT "$UPLOAD_URL" \
@@ -167,13 +182,13 @@ DOWNLOAD=$(curl -s -b "$COOKIE_JAR" -c "$COOKIE_JAR" \
   "$BASE/api/policies/$NEW_ID/download-url")
 echo "$DOWNLOAD" | python3 -m json.tool
 DOWNLOAD_URL=$(echo "$DOWNLOAD" | python3 -c "import sys,json; print(json.load(sys.stdin)['download_url'])" 2>/dev/null || echo "")
-[ -n "$DOWNLOAD_URL" ] && check "Got presigned download URL" || fail "No download_url in response"
+[ -n "$DOWNLOAD_URL" ] && check "Got presigned download URL" || fail "No download_url in response: $DOWNLOAD"
 
 # ── 14. Download file via presigned URL ───────────────────────────────────────
-header "GET $DOWNLOAD_URL (direct from MinIO)"
+header "GET (direct from MinIO)"
 CONTENT=$(curl -s "$DOWNLOAD_URL")
 echo "Content: $CONTENT"
-[ "$CONTENT" = "hello pdf" ] && check "Downloaded correct file content" || fail "Wrong content: $CONTENT"
+[ "$CONTENT" = "hello pdf" ] && check "Downloaded correct file content" || fail "Wrong content: '$CONTENT'"
 
 # ── 15. Validation errors ─────────────────────────────────────────────────────
 header "POST /api/policies (missing required fields → 422)"
