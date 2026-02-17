@@ -5,12 +5,14 @@ namespace Database\Seeders;
 use App\Models\Policy;
 use App\Models\Signoff;
 use App\Models\User;
-use Carbon\Carbon;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
+    use WithoutModelEvents;
+
     public function run(): void
     {
         // Idempotent: clear existing data
@@ -84,17 +86,17 @@ class DatabaseSeeder extends Seeder
             [
                 'policy_id' => $handbook->id,
                 'user_id' => $alice->id,
-                'signed_at' => Carbon::parse('2026-02-10 09:15:00'),
+                'signed_at' => '2026-02-10 09:15:00',
             ],
             [
                 'policy_id' => $handbook->id,
                 'user_id' => $bob->id,
-                'signed_at' => Carbon::parse('2026-02-11 14:32:00'),
+                'signed_at' => '2026-02-11 14:32:00',
             ],
             [
                 'policy_id' => $handbook->id,
                 'user_id' => $charlie->id,
-                'signed_at' => Carbon::parse('2026-02-14 11:08:00'),
+                'signed_at' => '2026-02-14 11:08:00',
             ],
         ]);
 
@@ -103,12 +105,12 @@ class DatabaseSeeder extends Seeder
             [
                 'policy_id' => $hipaa->id,
                 'user_id' => $alice->id,
-                'signed_at' => Carbon::parse('2026-02-12 10:00:00'),
+                'signed_at' => '2026-02-12 10:00:00',
             ],
             [
                 'policy_id' => $hipaa->id,
                 'user_id' => $mike->id,
-                'signed_at' => Carbon::parse('2026-02-13 16:45:00'),
+                'signed_at' => '2026-02-13 16:45:00',
             ],
         ]);
     }
