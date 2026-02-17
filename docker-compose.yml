@@ -1,0 +1,48 @@
+services:
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./api:/var/www/html
+    depends_on:
+      - mysql
+    environment:
+      - APP_ENV=local
+    networks:
+      - policysignoff
+
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: policysignoff
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - policysignoff
+
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - policysignoff
+
+volumes:
+  mysql_data:
+  minio_data:
+
+networks:
+  policysignoff:
