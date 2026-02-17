@@ -39,6 +39,8 @@ services:
       - "3001:80"
     volumes: []
     environment: []
+    networks:
+      - policysignoff
 
   nginx:
     image: nginx:alpine
@@ -53,3 +55,7 @@ services:
       - client-react
     networks:
       - policysignoff
+
+networks:
+  policysignoff:
+    external: false
