@@ -73,7 +73,7 @@ class PolicyController extends Controller
         $signoffsByUserId = $policy->signoffs->keyBy('user_id');
         $signedCount = $policy->signoffs->count();
 
-        $allUsers = User::all();
+        $allUsers = User::select('id', 'name')->get();
 
         $signoffsList = $allUsers->map(function (User $u) use ($signoffsByUserId, $policy, $today) {
             $signoff = $signoffsByUserId->get($u->id);
@@ -81,7 +81,8 @@ class PolicyController extends Controller
             if ($signoff) {
                 return [
                     'user' => $u->name,
-                    'signed_at' => $signoff->signed_at->format('Y-m-d\TH:i:s\Z'),
+                    'signed_at' => $signoff->signed_at->utc()->toIso8601String(),
+                    'overdue' => false,
                 ];
             }
 
