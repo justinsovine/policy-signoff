@@ -17,7 +17,6 @@ class Policy extends Model
         'due_date',
         'file_path',
         'file_name',
-        'created_by',
     ];
 
     protected function casts(): array
