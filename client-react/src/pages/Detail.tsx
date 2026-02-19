@@ -1,4 +1,4 @@
-import { User as UserType } from "../api";
+import { User as UserType } from "../types";
 
 interface DetailProps {
   user: UserType | null;
