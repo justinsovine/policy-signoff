@@ -111,7 +111,7 @@ async function api(method, path, body = null) {
   return res.json();
 }
 ```
-This pattern works identically in React, Alpine, and Vue.
+The logic is identical in React, Alpine, and Vue. In the React (TypeScript) client, make the function generic — `async function api<T>(method: string, path: string, body?: unknown): Promise<T>` — so call sites get typed responses without casting. Alpine and Vue use the plain JS version shown above.
 
 ---
 
@@ -172,7 +172,7 @@ This is ~15 lines of logic per client. The pattern is identical across all three
 ## Client 1: React
 
 ### Setup
-- Vite + React (`npm create vite@latest client-react -- --template react`)
+- Vite + React + TypeScript (`npm create vite@latest client-react -- --template react-ts`)
 - React Router for navigation (`npm install react-router-dom`)
 - Tailwind for styling (`npm install -D tailwindcss @tailwindcss/vite`)
 - No state management library needed — `useState` and lifting state is enough for this scope
@@ -180,17 +180,17 @@ This is ~15 lines of logic per client. The pattern is identical across all three
 ### Suggested file structure
 ```
 src/
-  api.js          — fetch wrapper (getCookie + api helper from above)
-  App.jsx         — routes and auth state
+  api.ts          — fetch wrapper + shared interfaces (User, Policy, PolicyDetail, SignoffEntry, ValidationErrors)
+  App.tsx         — routes and auth state
   pages/
-    Login.jsx     — login + register forms
-    Dashboard.jsx — policy list
-    Policy.jsx    — policy detail + sign-off button + summary
-    Create.jsx    — create policy form
+    Login.tsx     — login + register forms
+    Dashboard.tsx — policy list
+    Detail.tsx    — policy detail + sign-off button + summary
+    Create.tsx    — create policy form
   components/
-    PolicyCard.jsx    — single policy in the list (title, due date, status badge)
-    SignoffList.jsx   — list of users and their sign-off status
-    StatusBadge.jsx   — signed (green) / pending (yellow) / overdue (red)
+    PolicyCard.tsx    — single policy in the list (title, due date, status badge)
+    SignoffList.tsx   — list of users and their sign-off status
+    StatusBadge.tsx   — signed (green) / pending (yellow) / overdue (red)
 ```
 
 ### Step-by-step
@@ -200,11 +200,18 @@ src/
 - Set up React Router with 4 routes: `/login`, `/`, `/policies/:id`, `/create`
 
 **2. Build the API wrapper**
-- `api.js` with `getCookie()` and `api()` from above
-- Export them for use across pages
+- `api.ts` with `getCookie()` and a typed `api<T>()` function
+- Make the helper generic: `async function api<T>(method: string, path: string, body?: unknown): Promise<T>`
+- Define shared interfaces in `api.ts` — all pages and components import from here:
+  - `User` — `{ id: number; name: string; email: string }`
+  - `ValidationErrors` — `Record<string, string[]>` (the `errors` field from a 422 response)
+  - `Policy` — list response shape (id, title, description, due_date, created_by, has_file, signed, overdue)
+  - `SignoffEntry` — `{ user: string; signed_at: string | null; overdue: boolean }`
+  - `PolicyDetail extends Policy` — adds `signoff_summary: { total_users, signed_count, users: SignoffEntry[] }`
+- Export all of them for use across pages and components
 
-**3. Auth state in App.jsx**
-- `useState` for `user` (null = logged out, object = logged in)
+**3. Auth state in App.tsx**
+- `useState<User | null>` for `user` (null = logged out, object = logged in)
 - On mount: `GET /user` to check if session exists (wrap in try/catch — 401 means not logged in)
 - Pass `user` and `setUser` down to pages (or use context if you want to practice it)
 - Redirect to `/login` if not authenticated. If the session expired (user was previously logged in but `GET /user` returned 401), redirect to `/login?expired=1`
@@ -214,7 +221,7 @@ src/
 - Form state with `useState` for each field
 - On submit: hit CSRF endpoint first, then `POST /login` or `/register`
 - On success: `setUser(response)`, navigate to `/`
-- On error: display validation messages from the 422 response
+- On error: display field-level validation messages from the 422 response using the `ValidationErrors` type from `api.ts`
 - Check for `?expired=1` in the URL (via `useSearchParams`) and show the session expired amber banner if present
 
 **5. Dashboard**
@@ -234,7 +241,7 @@ src/
 
 **7. Create policy**
 - Form with title, description, due_date inputs + a file input (`<input type="file">`)
-- Use a ref (`useRef`) for the file input, or store the File object in state
+- Use a ref (`useRef<HTMLInputElement>(null)`) for the file input, or store the file in state with `useState<File | null>(null)`
 - On submit: create the policy first, then upload the file if selected (see upload pattern above), then navigate to `/policies/${policy.id}` (the new policy's detail page)
 - Display validation errors if 422
 
@@ -246,10 +253,13 @@ src/
 ### React-specific hints
 - `useEffect` with an empty dependency array for "fetch on mount"
 - Controlled inputs: `value={title}` + `onChange={(e) => setTitle(e.target.value)}`
-- File inputs are uncontrolled — use `useRef()` or read from `e.target.files[0]` in the onChange handler
-- Error display: keep an `errors` state object, map field names to messages from the 422 response
+- File inputs are uncontrolled — use `useRef<HTMLInputElement>(null)` or read from `e.target.files?.[0]` in the onChange handler
+- Error display: keep an `errors` state typed as `ValidationErrors` (from `api.ts`), map field names to messages from the 422 response
 - Navigation: `useNavigate()` from React Router for programmatic redirects
 - Loading states: a simple `loading` boolean while fetches are in flight
+- TypeScript: all API response shapes live in `api.ts` as interfaces — import them where needed; this gives autocomplete across pages and components and avoids `any`
+- TypeScript: call the generic helper with the expected return type: `api<User>('GET', '/user')`, `api<Policy[]>('GET', '/policies')`, `api<PolicyDetail>('GET', \`/policies/${id}\`)`
+- TypeScript: `noUnusedLocals` and `noUnusedParameters` are enabled in `tsconfig.json` — don't declare variables you don't use
 
 ---
 
