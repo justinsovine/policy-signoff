@@ -99,6 +99,26 @@ AWS_USE_PATH_STYLE_ENDPOINT=true
 - **Commit and push automatically** — after completing implementation work, always commit and push without waiting to be asked
 - **PR text** — when creating PRs, write a proper title and body: a short summary paragraph explaining the change and its rationale, followed by a bullet list of what was changed and why
 
+### Semantic Commit Messages
+
+Format: `<type>(<scope>): <subject>` — scope is optional, subject in present tense.
+
+| Type | Use for |
+|------|---------|
+| `feat` | New feature for end users |
+| `fix` | Bug fix for end users |
+| `docs` | Documentation changes |
+| `style` | Formatting, whitespace — no logic changes |
+| `refactor` | Restructuring production code — no feature or bug changes |
+| `test` | Adding or refactoring tests — no production code changes |
+| `chore` | Dependency updates, build scripts, maintenance |
+| `build` | Build system or external dependency changes |
+| `ci` | CI configuration changes |
+| `perf` | Performance improvements |
+| `revert` | Reverting a previous commit |
+
+Examples: `feat(auth): add login page`, `fix(api): handle 419 on CSRF expiry`, `chore: upgrade tailwindcss to v4`
+
 ## Common Gotchas
 
 - CORS errors during local dev → check API's CORS config and Sanctum stateful domains, not client code
