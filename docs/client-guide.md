@@ -205,9 +205,9 @@ src/
 - Define shared interfaces in `api.ts` — all pages and components import from here:
   - `User` — `{ id: number; name: string; email: string }`
   - `ValidationErrors` — `Record<string, string[]>` (the `errors` field from a 422 response)
-  - `Policy` — list response shape (id, title, description, due_date, created_by, has_file, signed, overdue)
+  - `Policy` — list response shape (id, title, due_date, created_by, has_file, signed, overdue)
   - `SignoffEntry` — `{ user: string; signed_at: string | null; overdue: boolean }`
-  - `PolicyDetail extends Policy` — adds `signoff_summary: { total_users, signed_count, users: SignoffEntry[] }`
+  - `PolicyDetail extends Policy` — adds `description`, `file_name?`, and `signoff_summary: { total_users, signed_count, signoffs: SignoffEntry[] }`
 - Export all of them for use across pages and components
 
 **3. Auth state in App.tsx**
