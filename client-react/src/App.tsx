@@ -28,6 +28,7 @@ function App() {
   )
 }
 
+// Holds auth state and defines all routes
 function AppRoutes() {
   const [user, setUser] = useState<UserType | null>(null);
   const [wasLoggedIn, setWasLoggedIn] = useState(false);

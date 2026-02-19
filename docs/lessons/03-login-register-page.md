@@ -43,47 +43,46 @@ export function Login({ user, setUser }: LoginProps) {
 
 ---
 
-## Step 2: Redirect if already logged in
+## Step 2: Hooks and the auth redirect
 
 Look at `App.tsx` — the `/login` route is *not* wrapped in `<RequireAuth>`. That means a logged-in user could navigate to `/login` and see the form. We should redirect them to the dashboard instead.
 
-Add this early return at the top of the component, before any other hooks:
+But there's a critical rule to follow first: **React's Rules of Hooks**. Hooks (`useState`, `useNavigate`, etc.) must always be called in the same order on every render. You can never put a hook *after* a conditional return — if the component bails out early, those hooks never run, and React loses track of which hook is which.
+
+So we declare all hooks first, then check the redirect:
 
 ```tsx
-import { Navigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { api, User, ValidationErrors } from '../api';
 
-if (user) {
-  return <Navigate to="/" replace />;
+export function Login({ user, setUser }: LoginProps) {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const sessionExpired = searchParams.get('expired') === '1';
+
+  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [passwordConfirmation, setPasswordConfirmation] = useState('');
+  const [errors, setErrors] = useState<ValidationErrors>({});
+  const [loading, setLoading] = useState(false);
+
+  // Redirect AFTER all hooks are declared
+  if (user) {
+    return <Navigate to="/" replace />;
+  }
+
+  // ... rest of the component
 }
 ```
 
 `<Navigate>` is React Router's component-based redirect — when it renders, the browser navigates to the `to` path. The `replace` prop prevents `/login` from appearing in the browser history, so the back button doesn't loop back to the login page.
 
-This is a common pattern: check auth state, bail out early with a redirect, and only render the form for unauthenticated users.
-
 ---
 
-## Step 3: Form state
-
-This page has a lot of state. Add it all at the top of the component:
-
-```typescript
-import { useState } from 'react';
-
-const [mode, setMode] = useState<'login' | 'register'>('login');
-
-// Form fields
-const [name, setName] = useState('');
-const [email, setEmail] = useState('');
-const [password, setPassword] = useState('');
-const [passwordConfirmation, setPasswordConfirmation] = useState('');
-
-// UI state
-const [errors, setErrors] = useState<ValidationErrors>({});
-const [loading, setLoading] = useState(false);
-```
-
-### Controlled inputs
+## Step 3: Controlled inputs
 
 A "controlled input" is one where React state is the source of truth for its value. Instead of the DOM holding the current value, your `useState` variable holds it, and you sync them with `value` and `onChange`:
 
@@ -140,7 +139,7 @@ Show the name and password confirmation fields only in register mode:
 
 Before the first POST to Laravel, you must hit `GET /sanctum/csrf-cookie`. This sets the `XSRF-TOKEN` cookie. Without it, Laravel returns 419 (CSRF token mismatch) on every form submission.
 
-You only need to do this once before the first POST — the cookie persists and refreshes automatically after that. The simplest place to call it is at the top of the submit handler, before the login/register request:
+The simplest place to call it is at the top of the submit handler, before the login/register request. Calling it on every submit is harmless — it's an idempotent GET that just refreshes the cookie:
 
 ```typescript
 await fetch(`${import.meta.env.VITE_API_URL}/sanctum/csrf-cookie`, {
@@ -158,11 +157,6 @@ Note: this uses a raw `fetch`, not the `api()` helper, because:
 ## Step 6: The submit handler
 
 ```typescript
-import { api, User, ValidationErrors } from '../api';
-import { useNavigate, Navigate } from 'react-router-dom';
-
-const navigate = useNavigate();
-
 async function handleSubmit(e: React.FormEvent) {
   e.preventDefault();  // stops the browser from reloading the page
   setLoading(true);
@@ -180,10 +174,10 @@ async function handleSubmit(e: React.FormEvent) {
         ? { email, password }
         : { name, email, password, password_confirmation: passwordConfirmation };
 
-    const user = await api<User>('POST', mode === 'login' ? '/login' : '/register', body);
+    const data = await api<User>('POST', mode === 'login' ? '/login' : '/register', body);
 
     // 3. Update parent state and redirect
-    setUser(user);
+    setUser(data);
     navigate('/');
   } catch (err: unknown) {
     // 4. Handle validation errors
@@ -203,6 +197,10 @@ HTML forms submit via GET/POST by default, which causes a full page reload. `e.p
 ### `React.FormEvent`
 
 The `e` parameter in a form's `onSubmit` handler is typed as `React.FormEvent`. This is React's type for form events — you need it to call `e.preventDefault()` in TypeScript without a type error.
+
+### Why the response is called `data`, not `user`
+
+The component already has a `user` prop from its function signature. If you wrote `const user = await api<User>(...)`, that would *shadow* the prop — creating a new local variable with the same name. Shadowing is confusing because a reader might think `setUser(user)` is passing the prop back, not the API response. Using `data` makes it clear which `user` you mean.
 
 ### The `finally` block
 
@@ -224,7 +222,7 @@ When Laravel receives invalid form data (bad email format, password too short, e
 }
 ```
 
-Our `api()` helper throws this object. The `errors` field matches the `ValidationErrors` type (`Record<string, string[]>`).
+Our `api()` helper throws this object — look at `api.ts` line 38: `throw await response.json()`. The thrown value is the parsed JSON body, which includes the `errors` field matching the `ValidationErrors` type (`Record<string, string[]>`).
 
 We need a type guard to safely check the shape of the thrown value before reading `.errors`:
 
@@ -271,11 +269,9 @@ Then under each field, show the first error message if one exists:
 
 When `App.tsx` detects an expired session, it redirects to `/login?expired=1`. The Login page reads that query parameter and shows an amber warning banner.
 
-React Router's `useSearchParams` hook gives you read access to the URL's query string:
+React Router's `useSearchParams` hook gives you read access to the URL's query string. We already called it at the top of the component (before the early return, per the rules of hooks):
 
 ```typescript
-import { useSearchParams } from 'react-router-dom';
-
 const [searchParams] = useSearchParams();
 const sessionExpired = searchParams.get('expired') === '1';
 ```
@@ -318,10 +314,6 @@ function isValidationError(err: unknown): err is ApiValidationError {
 }
 
 export function Login({ user, setUser }: LoginProps) {
-  if (user) {
-    return <Navigate to="/" replace />;
-  }
-
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const sessionExpired = searchParams.get('expired') === '1';
@@ -333,6 +325,10 @@ export function Login({ user, setUser }: LoginProps) {
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [loading, setLoading] = useState(false);
+
+  if (user) {
+    return <Navigate to="/" replace />;
+  }
 
   function switchMode() {
     setMode(mode === 'login' ? 'register' : 'login');
@@ -354,8 +350,8 @@ export function Login({ user, setUser }: LoginProps) {
           ? { email, password }
           : { name, email, password, password_confirmation: passwordConfirmation };
 
-      const user = await api<User>('POST', mode === 'login' ? '/login' : '/register', body);
-      setUser(user);
+      const data = await api<User>('POST', mode === 'login' ? '/login' : '/register', body);
+      setUser(data);
       navigate('/');
     } catch (err: unknown) {
       if (isValidationError(err)) {
@@ -430,7 +426,7 @@ export function Login({ user, setUser }: LoginProps) {
             disabled={loading}
             className="w-full bg-zinc-900 text-white rounded py-2 font-medium disabled:opacity-50"
           >
-            {loading ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Create account'}
+            {loading ? 'Please wait...' : mode === 'login' ? 'Sign in' : 'Create account'}
           </button>
         </form>
 
@@ -450,11 +446,12 @@ export function Login({ user, setUser }: LoginProps) {
 ## Checklist
 
 - [ ] `user` and `setUser` props are typed and received correctly
-- [ ] Logged-in users are redirected to `/` via `<Navigate>`
+- [ ] All hooks (`useNavigate`, `useSearchParams`, `useState`) are called before any early return
+- [ ] Logged-in users are redirected to `/` via `<Navigate>` (after hooks)
 - [ ] `mode` state switches between `'login'` and `'register'`; errors clear on switch
 - [ ] All form fields are controlled inputs (`value` + `onChange`)
-- [ ] `handleSubmit` calls the CSRF endpoint before the first POST
+- [ ] `handleSubmit` calls the CSRF endpoint before the login/register POST
 - [ ] 422 errors are caught and stored in `errors` state; shown under each field
 - [ ] `sessionExpired` banner shows when `?expired=1` is in the URL
-- [ ] On success: `setUser` is called, then navigate to `/`
+- [ ] On success: `setUser` is called with the API response, then navigate to `/`
 - [ ] `loading` disables the submit button while the request is in flight
