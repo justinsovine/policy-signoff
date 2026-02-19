@@ -4,7 +4,8 @@ import { Dashboard } from './pages/Dashboard.tsx';
 import { Detail } from './pages/Detail.tsx';
 import { Create } from './pages/Create.tsx';
 import { BrowserRouter, useNavigate, Routes, Route, Navigate } from 'react-router-dom';
-import { api, User as UserType, Policy as PolicyType, SignoffEntry as SignoffEntryType, PolicyDetail as PolicyDetailType } from './api.ts';
+import { api } from './api';
+import { User as UserType } from './types';
 import { useEffect, useState } from 'react';
 
 interface RequireAuthProps {
