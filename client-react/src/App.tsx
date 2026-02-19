@@ -3,7 +3,7 @@ import { Login } from './pages/Login.tsx';
 import { Dashboard } from './pages/Dashboard.tsx';
 import { Detail } from './pages/Detail.tsx';
 import { Create } from './pages/Create.tsx';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 function App() {
   return (

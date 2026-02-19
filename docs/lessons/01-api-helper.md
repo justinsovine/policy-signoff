@@ -154,7 +154,6 @@ export type ValidationErrors = Record<string, string[]>;
 export interface Policy {
   id: number;
   title: string;
-  description: string;
   due_date: string;       // ISO date string, e.g. "2026-03-01"
   created_by: string;     // creator's full name
   has_file: boolean;
@@ -169,10 +168,12 @@ export interface SignoffEntry {
 }
 
 export interface PolicyDetail extends Policy {
+  description: string;
+  file_name?: string;
   signoff_summary: {
     total_users: number;
     signed_count: number;
-    users: SignoffEntry[];
+    signoffs: SignoffEntry[];
   };
 }
 ```
@@ -230,7 +231,6 @@ export type ValidationErrors = Record<string, string[]>;
 export interface Policy {
   id: number;
   title: string;
-  description: string;
   due_date: string;
   created_by: string;
   has_file: boolean;
@@ -245,10 +245,12 @@ export interface SignoffEntry {
 }
 
 export interface PolicyDetail extends Policy {
+  description: string;
+  file_name?: string;
   signoff_summary: {
     total_users: number;
     signed_count: number;
-    users: SignoffEntry[];
+    signoffs: SignoffEntry[];
   };
 }
 ```
