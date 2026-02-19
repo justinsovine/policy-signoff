@@ -20,7 +20,7 @@ It also shows an amber banner if the user was redirected here because their sess
 
 ## Step 1: Props
 
-From Lesson 2, `App.tsx` passes `setUser` into this page so it can update the parent's auth state after a successful login or register.
+From Lesson 2, `App.tsx` passes both `user` and `setUser` into this page. `setUser` updates the parent's auth state after a successful login or register. `user` lets the page redirect already-logged-in users away from the login screen.
 
 Start with the component shell:
 
@@ -28,10 +28,11 @@ Start with the component shell:
 import { User } from '../api';
 
 interface LoginProps {
+  user: User | null;
   setUser: (user: User | null) => void;
 }
 
-export function Login({ setUser }: LoginProps) {
+export function Login({ user, setUser }: LoginProps) {
   return (
     <>
       <h1>Login</h1>
@@ -42,7 +43,27 @@ export function Login({ setUser }: LoginProps) {
 
 ---
 
-## Step 2: Form state
+## Step 2: Redirect if already logged in
+
+Look at `App.tsx` — the `/login` route is *not* wrapped in `<RequireAuth>`. That means a logged-in user could navigate to `/login` and see the form. We should redirect them to the dashboard instead.
+
+Add this early return at the top of the component, before any other hooks:
+
+```tsx
+import { Navigate } from 'react-router-dom';
+
+if (user) {
+  return <Navigate to="/" replace />;
+}
+```
+
+`<Navigate>` is React Router's component-based redirect — when it renders, the browser navigates to the `to` path. The `replace` prop prevents `/login` from appearing in the browser history, so the back button doesn't loop back to the login page.
+
+This is a common pattern: check auth state, bail out early with a redirect, and only render the form for unauthenticated users.
+
+---
+
+## Step 3: Form state
 
 This page has a lot of state. Add it all at the top of the component:
 
@@ -82,7 +103,7 @@ Every keystroke fires `onChange`, which calls `setEmail`, which updates state, w
 
 ---
 
-## Step 3: The form toggle
+## Step 4: The form toggle
 
 Render different fields based on `mode`:
 
@@ -115,7 +136,7 @@ Show the name and password confirmation fields only in register mode:
 
 ---
 
-## Step 4: The CSRF preflight
+## Step 5: The CSRF preflight
 
 Before the first POST to Laravel, you must hit `GET /sanctum/csrf-cookie`. This sets the `XSRF-TOKEN` cookie. Without it, Laravel returns 419 (CSRF token mismatch) on every form submission.
 
@@ -134,11 +155,11 @@ Note: this uses a raw `fetch`, not the `api()` helper, because:
 
 ---
 
-## Step 5: The submit handler
+## Step 6: The submit handler
 
 ```typescript
 import { api, User, ValidationErrors } from '../api';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 
 const navigate = useNavigate();
 
@@ -189,7 +210,7 @@ The `e` parameter in a form's `onSubmit` handler is typed as `React.FormEvent`. 
 
 ---
 
-## Step 6: Handling 422 validation errors
+## Step 7: Handling 422 validation errors
 
 When Laravel receives invalid form data (bad email format, password too short, etc.), it returns a 422 response with a body like this:
 
@@ -246,7 +267,7 @@ Then under each field, show the first error message if one exists:
 
 ---
 
-## Step 7: The session-expired banner
+## Step 8: The session-expired banner
 
 When `App.tsx` detects an expired session, it redirects to `/login?expired=1`. The Login page reads that query parameter and shows an amber warning banner.
 
@@ -275,10 +296,11 @@ Then in the JSX, show the banner conditionally:
 
 ```tsx
 import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { api, User, ValidationErrors } from '../api';
 
 interface LoginProps {
+  user: User | null;
   setUser: (user: User | null) => void;
 }
 
@@ -295,7 +317,11 @@ function isValidationError(err: unknown): err is ApiValidationError {
   );
 }
 
-export function Login({ setUser }: LoginProps) {
+export function Login({ user, setUser }: LoginProps) {
+  if (user) {
+    return <Navigate to="/" replace />;
+  }
+
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const sessionExpired = searchParams.get('expired') === '1';
@@ -423,7 +449,8 @@ export function Login({ setUser }: LoginProps) {
 
 ## Checklist
 
-- [ ] `setUser` prop is typed and received correctly
+- [ ] `user` and `setUser` props are typed and received correctly
+- [ ] Logged-in users are redirected to `/` via `<Navigate>`
 - [ ] `mode` state switches between `'login'` and `'register'`; errors clear on switch
 - [ ] All form fields are controlled inputs (`value` + `onChange`)
 - [ ] `handleSubmit` calls the CSRF endpoint before the first POST
