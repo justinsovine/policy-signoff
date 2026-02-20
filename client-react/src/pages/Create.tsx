@@ -1,4 +1,4 @@
-import { User as UserType } from "../types";
+import { User as UserType } from "@/types";
 
 interface CreateProps {
   user: UserType | null;

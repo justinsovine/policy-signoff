@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User as UserType } from "../types";
+import { User as UserType } from "@/types";
 import { useSearchParams } from 'react-router-dom';
 
 interface LoginProps {
