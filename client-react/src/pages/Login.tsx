@@ -6,9 +6,9 @@ interface LoginProps {
 }
 
 export function Login({ user, setUser }: LoginProps) {
-    return (
-        <>
-            <h1 className="text-2xl font-bold font-serif">Login</h1>
-        </>
-    );
+  return (
+    <>
+      <h1 className="text-2xl font-bold font-serif">Login</h1>
+    </>
+  );
 }

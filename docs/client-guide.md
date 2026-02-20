@@ -188,10 +188,26 @@ src/
     Detail.tsx    — policy detail + sign-off button + summary
     Create.tsx    — create policy form
   components/
+    Header.tsx        — shared nav header (logo + user name + avatar + sign out)
     PolicyCard.tsx    — single policy in the list (title, due date, status badge)
     SignoffList.tsx   — list of users and their sign-off status
     StatusBadge.tsx   — signed (green) / pending (yellow) / overdue (red)
 ```
+
+### Starting from mockups
+
+Each page's HTML structure comes from the static mockups in `docs/mockups/`. Start by translating the mockup HTML to JSX, then break hardcoded values into state variables and wire up API calls.
+
+HTML → JSX translation checklist:
+- `class` → `className`
+- `for` → `htmlFor`
+- Self-closing tags need `/>` (`<input>` → `<input />`, `<br>` → `<br />`)
+- `style="..."` string → `style={{ }}` object with camelCase props (e.g. `box-shadow` → `boxShadow`)
+- `<a href="...">` to other pages → `<Link to="...">` from React Router
+- HTML entities like `&larr;` work fine in JSX
+- Hardcoded text/data → state variables or props
+
+The mockup files also include alternate UI states (validation errors, session expired, file selected, already signed) separated by dashed dividers — translate each state into conditional rendering.
 
 ### Step-by-step
 
@@ -217,38 +233,49 @@ src/
 - Redirect to `/login` if not authenticated. If the session expired (user was previously logged in but `GET /user` returned 401), redirect to `/login?expired=1`
 
 **4. Login page**
+- Start with the markup from `docs/mockups/login.html` and `docs/mockups/register.html`. Both share the same split layout (left brand panel + right form), so combine them into a single component with a `mode` toggle (`'login' | 'register'`).
+- The brand panel uses a custom `.brand-panel` CSS class for its gradient + SVG noise pattern — add this to `index.css`. The panel is `hidden lg:flex lg:w-1/2`. A mobile brand mark (logo row) is visible below `lg`.
 - Two forms (login + register) with a toggle between them
 - Form state with `useState` for each field
 - On submit: hit CSRF endpoint first, then `POST /login` or `/register`
 - On success: `setUser(response)`, navigate to `/`
-- On error: display field-level validation messages from the 422 response using the `ValidationErrors` type from `api.ts`
-- Check for `?expired=1` in the URL (via `useSearchParams`) and show the session expired amber banner if present
+- On error: display field-level validation messages from the 422 response using the `ValidationErrors` type from `api.ts`. See the "STATE: Validation Error" section in each mockup for the error styling (red border + `boxShadow: '0 0 0 1px rgb(252 165 165)'` + red error text below field).
+- Check for `?expired=1` in the URL (via `useSearchParams`) and show the session expired amber banner if present (see "STATE: Session Expired" in `login.html`)
+- Redirect away if already logged in (`user !== null`)
+- Also clean up `App.css` — delete all Vite scaffold leftovers (`.logo`, `.logo-spin`, `.read-the-docs`, `#root` styles). The `#root` max-width and text-align will fight the full-bleed auth layout.
 
 **5. Dashboard**
+- Start with the markup from `docs/mockups/dashboard.html`. The nav header is shared across dashboard, detail, and create — extract it into a `Header.tsx` component that takes `user` as a prop.
 - `useEffect` to fetch `GET /policies` on mount
 - Map over policies, render `PolicyCard` for each
 - Each card links to `/policies/:id`
 - Add a link/button to `/create`
 - Logout button calls `POST /logout`, then `setUser(null)`
+- Summary stat cards (total, overdue, pending, signed) computed from the policy list
+- Status badges use the mockup's color scheme: overdue (red), pending (amber), signed (emerald)
 
 **6. Policy detail**
+- Start with the markup from `docs/mockups/detail.html`. It has two states separated by a dashed divider: unsigned (with sign-off button) and already signed (with green confirmation box). Use conditional rendering to switch between them.
+- Uses the shared `Header` component from step 5
 - `useEffect` to fetch `GET /policies/:id` on mount (get id from `useParams`)
 - Render full description, due date, status
-- If `has_file`: "View Document" button that fetches `GET /policies/:id/download-url` and opens it in a new tab
+- If `has_file`: "Download Document" button that fetches `GET /policies/:id/download-url` and opens it in a new tab
 - If not signed: "Sign Off" button → `POST /policies/:id/signoff` → re-fetch the policy to update local state. The button is replaced with a green confirmation box showing "You signed off on this policy" and the timestamp. Handle 409 (already signed) the same as success.
 - If already signed: show the green confirmation box instead of the button
-- Render sign-off summary list
+- Sign-off summary table with avatar circles, status badges, signed-at dates. Current user's row is highlighted with `bg-zinc-50/50`.
 
 **7. Create policy**
+- Start with the markup from `docs/mockups/create.html`. It has two states: the default form with a file upload dropzone, and a "STATE: File Selected" alternate showing a file card with filename, size, and remove button. Toggle between them based on whether a file is selected.
+- Uses the shared `Header` component from step 5
 - Form with title, description, due_date inputs + a file input (`<input type="file">`)
 - Use a ref (`useRef<HTMLInputElement>(null)`) for the file input, or store the file in state with `useState<File | null>(null)`
 - On submit: create the policy first, then upload the file if selected (see upload pattern above), then navigate to `/policies/${policy.id}` (the new policy's detail page)
-- Display validation errors if 422
+- Display validation errors if 422 (see the title field's error state in the mockup for the styling pattern)
 
 **8. Style it**
-- Tailwind utility classes. Keep it clean, not fancy.
-- Status badges: green for signed, yellow for pending, red for overdue
-- Responsive: looks fine on mobile
+- If you started from the mockup markup in each step above, the styling is already done — the mockups use the full Tailwind class treatment with responsive breakpoints, hover states, and the project's color palette (zinc neutrals, emerald for signed, amber for pending, red for overdue).
+- The only custom CSS needed is the `.brand-panel` class in `index.css` for the login page's gradient background (copied from the `<style>` block in `login.html`).
+- Responsive: the mockups already handle mobile breakpoints (`sm:`, `lg:` prefixes)
 
 ### React-specific hints
 - `useEffect` with an empty dependency array for "fetch on mount"
