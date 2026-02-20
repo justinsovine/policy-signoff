@@ -60,9 +60,9 @@ function AppRoutes() {
       <Route
         path="/" 
         element={
-          <RequireAuth user={user}>
+          
             <Dashboard user={user} setUser={setUser} />
-          </RequireAuth>
+          
         } 
       />
       <Route
