@@ -87,6 +87,10 @@ function AppRoutes() {
           </RequireAuth>
         } 
       />
+      <Route
+        path="*"
+        element={<Navigate to="/" replace />}
+      />
     </Routes>
   );
 }
