@@ -1,3 +1,5 @@
+import { Plus } from 'lucide-react';
+
 // ...
 export function MainContainer({
   children,
@@ -29,8 +31,8 @@ export function PageHeader() {
         </div>
         <button 
           onClick={() => {}}
-          className="inline-flex items-center justify-center h-9 px-4 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-zinc-800 transition-colors whitespace-nowrap">
-          + Create policy
+          className="inline-flex items-center justify-center h-9 px-3 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-zinc-800 transition-colors whitespace-nowrap">
+          <Plus className="size-4 mr-1" /> Create Policy
         </button>
       </div>
     </>
