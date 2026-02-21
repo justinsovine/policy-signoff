@@ -1,5 +1,3 @@
-import { Plus } from 'lucide-react';
-
 // ...
 export function MainContainer({
   children,
@@ -16,25 +14,37 @@ export function MainContainer({
 }
 
 // ...
-export function PageHeader() {
+export function NavBar() {
   return(
-    <>
-      {/* <!-- Page Header --> */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="font-serif text-2xl font-semibold tracking-tight">
-            Policies
-          </h1>
-          <p className="mt-1 text-sm text-zinc-500">
-            Track and acknowledge your organization's policies
-          </p>
+    <header className="sticky top-0 z-50 bg-white border-b border-zinc-200">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-zinc-900 flex items-center justify-center">
+            <span className="text-xs font-bold tracking-tight text-white">
+              PS
+            </span>
+          </div>
+          <span className="font-serif text-lg font-medium tracking-tight">
+            PolicySignoff
+          </span>
         </div>
-        <button 
-          onClick={() => {}}
-          className="inline-flex items-center justify-center h-9 px-3 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-zinc-800 transition-colors whitespace-nowrap">
-          <Plus className="size-4 mr-1" /> Create Policy
-        </button>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-zinc-500 hidden sm:inline">
+            Dana Williams
+          </span>
+          <div className="w-8 h-8 rounded-full bg-zinc-200 flex items-center justify-center text-xs font-semibold text-zinc-600">
+            DW
+          </div>
+          <button
+            onClick={() => {
+              
+            }}
+            className="text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
+          >
+            Sign out
+          </button>
+        </div>
       </div>
-    </>
+    </header>
   );
 }

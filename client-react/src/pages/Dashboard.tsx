@@ -1,6 +1,7 @@
 import { User as UserType, Policy as PolicyType } from "@/types";
-import { MainContainer, PageHeader } from "@/components/Global.tsx";
+import { MainContainer, NavBar } from "@/components/Global.tsx";
 import { Link } from "react-router-dom";
+import { Plus } from 'lucide-react';
 
 interface DashboardProps {
   user: UserType | null;
@@ -52,7 +53,7 @@ export function Dashboard({ user, setUser }: DashboardProps) {
     <>
       <NavBar />
       <MainContainer>
-        <PageHeader />
+        <DashboardHeader />
         <SummaryStats tableData={tableData} />
         <PolicyTable tableData={tableData} />
         <PageFooter />
@@ -61,33 +62,26 @@ export function Dashboard({ user, setUser }: DashboardProps) {
   );
 }
 
-function NavBar() {
+// ...
+export function DashboardHeader() {
   return(
-    <header className="sticky top-0 z-50 bg-white border-b border-zinc-200">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-zinc-900 flex items-center justify-center">
-            <span className="text-xs font-bold tracking-tight text-white">
-              PS
-            </span>
-          </div>
-          <span className="font-serif text-lg font-medium tracking-tight">
-            PolicySignoff
-          </span>
+    <>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="font-serif text-2xl font-semibold tracking-tight">
+            Policies
+          </h1>
+          <p className="mt-1 text-sm text-zinc-500">
+            Track and acknowledge your organization's policies
+          </p>
         </div>
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-zinc-500 hidden sm:inline">
-            Dana Williams
-          </span>
-          <div className="w-8 h-8 rounded-full bg-zinc-200 flex items-center justify-center text-xs font-semibold text-zinc-600">
-            DW
-          </div>
-          <button className="text-sm text-zinc-500 hover:text-zinc-900 transition-colors">
-            Sign out
-          </button>
-        </div>
+        <Link 
+          to="/create"
+          className="inline-flex items-center justify-center h-9 px-3 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-zinc-800 transition-colors whitespace-nowrap">
+          <Plus className="size-4 mr-1" /> Create Policy
+        </Link>
       </div>
-    </header>
+    </>
   );
 }
 
@@ -158,7 +152,6 @@ function SummaryStats({
 
 // 
 function getStatusInfo(signed: boolean, overdue: boolean) {
-  const status: string = signed ? 'Signed' : (overdue ? 'Overdue' : 'Pending');
   if (signed) return { policyLabel: 'Signed', policyStyle: 'border-emerald-200 bg-emerald-50 text-emerald-700' };
   if (overdue) return { policyLabel: 'Overdue', policyStyle: 'border-red-200 bg-red-50 text-red-700' };
   return { policyLabel: 'Pending', policyStyle: 'border-amber-200 bg-amber-50 text-amber-700' };
@@ -188,7 +181,7 @@ function PolicyTable({
           return(
             <Link
               key={policy.id} 
-              to="/detail" 
+              to={`/policies/${policy.id}`}
               className="grid sm:grid-cols-12 gap-2 sm:gap-4 px-5 py-4 border-b border-zinc-100 hover:bg-zinc-50 transition-colors cursor-pointer items-center"
             >
               <div className="sm:col-span-5">

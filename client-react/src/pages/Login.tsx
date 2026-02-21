@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User as UserType } from "@/types";
+import { User as UserType, Quote as QuoteType } from "@/types";
 import { useSearchParams } from 'react-router-dom';
 
 interface LoginProps {
@@ -21,6 +21,41 @@ export function Login({ user, setUser }: LoginProps) {
 }
 
 function BrandPanel() {
+  const quotes: QuoteType[]  = [                                                                                                                  
+    {
+      quote: "Compliance isn't paperwork. It's the foundation of organizational trust.",                                             
+      initials: "JA",                                            
+      name: "Jane Admin",
+      title: "Head of Compliance",
+    },
+    {
+      quote: "A policy only protects you if everyone knows they've read it.",
+      initials: "MR",
+      name: "Marcus Reid",
+      title: "VP of Human Resources",
+    },
+    {
+      quote: "Accountability starts with acknowledgment. Sign-off is where intent becomes record.",
+      initials: "SP",
+      name: "Sandra Park",
+      title: "Chief People Officer",
+    },
+    {
+      quote: "The best compliance programs aren't about catching mistakes. They're about preventing them.",
+      initials: "DK",
+      name: "David Kim",
+      title: "Director of Risk Management",
+    },
+    {
+      quote: "When everyone is aligned on policy, you spend less time managing exceptions and more time doing real work.",
+      initials: "LC",
+      name: "Laura Chen",
+      title: "Legal & Compliance Lead",
+    },
+  ];
+  const random = Math.floor(Math.random() * quotes.length);
+  const quote = quotes[random];
+
   return (
     <div className="brand-panel relative hidden lg:flex lg:w-1/2 flex-col justify-between p-12 text-white overflow-hidden">
       <div className="relative z-10">
@@ -28,19 +63,27 @@ function BrandPanel() {
           <div className="w-9 h-9 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center">
             <span className="text-sm font-bold tracking-tight">PS</span>
           </div>
-          <span className="font-serif text-xl font-medium tracking-tight">PolicySignoff</span>
+          <span className="font-serif text-xl font-medium tracking-tight">
+            PolicySignoff
+          </span>
         </div>
       </div>
 
       <div className="relative z-10 max-w-md">
         <blockquote className="font-serif text-2xl leading-relaxed italic text-zinc-300">
-          "Compliance isn't paperwork — it's the foundation of organizational trust."
+          {quote.quote}
         </blockquote>
         <div className="mt-6 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center text-sm font-semibold">JA</div>
+          <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center text-sm font-semibold">
+            {quote.initials}
+          </div>
           <div>
-            <p className="text-sm font-medium text-zinc-200">Jane Admin</p>
-            <p className="text-sm text-zinc-500">Head of Compliance</p>
+            <p className="text-sm font-medium text-zinc-200">
+              {quote.name}
+            </p>
+            <p className="text-sm text-zinc-500">
+              {quote.title}
+            </p>
           </div>
         </div>
       </div>
@@ -68,17 +111,25 @@ function LoginForm({
           <div className="w-9 h-9 rounded-lg bg-zinc-900 flex items-center justify-center">
             <span className="text-sm font-bold tracking-tight text-white">PS</span>
           </div>
-          <span className="font-serif text-xl font-medium tracking-tight">PolicySignoff</span>
+          <span className="font-serif text-xl font-medium tracking-tight">
+            PolicySignoff
+          </span>
         </div>
 
         {expiredSession && <SessionExpired />}
 
-        <h1 className="font-serif text-3xl font-semibold tracking-tight">Welcome back</h1>
-        <p className="mt-2 text-sm text-zinc-500">Sign in to your account to continue</p>
+        <h1 className="font-serif text-3xl font-semibold tracking-tight">
+          Welcome back
+        </h1>
+        <p className="mt-2 text-sm text-zinc-500">
+          Sign in to your account to continue
+        </p>
 
         <form className="mt-8 space-y-5">
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1.5" htmlFor="email">Email address</label>
+            <label className="block text-sm font-medium text-zinc-700 mb-1.5" htmlFor="email">
+              Email address
+            </label>
             <input
               id="email"
               type="email"
@@ -92,7 +143,9 @@ function LoginForm({
 
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-sm font-medium text-zinc-700" htmlFor="password">Password</label>
+              <label className="text-sm font-medium text-zinc-700" htmlFor="password">
+                Password
+              </label>
             </div>
             <input
               id="password"
@@ -147,15 +200,23 @@ function RegisterForm({
           <div className="w-9 h-9 rounded-lg bg-zinc-900 flex items-center justify-center">
             <span className="text-sm font-bold tracking-tight text-white">PS</span>
           </div>
-          <span className="font-serif text-xl font-medium tracking-tight">PolicySignoff</span>
+          <span className="font-serif text-xl font-medium tracking-tight">
+            PolicySignoff
+          </span>
         </div>
 
-        <h1 className="font-serif text-3xl font-semibold tracking-tight">Create an account</h1>
-        <p className="mt-2 text-sm text-zinc-500">Get started with your organization's policy tracking</p>
+        <h1 className="font-serif text-3xl font-semibold tracking-tight">
+          Create an account
+        </h1>
+        <p className="mt-2 text-sm text-zinc-500">
+          Get started with your organization's policy tracking
+        </p>
 
         <form className="mt-8 space-y-5">
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1.5" htmlFor="name">Full name</label>
+            <label className="block text-sm font-medium text-zinc-700 mb-1.5" htmlFor="name">
+              Full name
+            </label>
             <input
               id="name"
               type="text"
@@ -166,7 +227,9 @@ function RegisterForm({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1.5" htmlFor="email">Email address</label>
+            <label className="block text-sm font-medium text-zinc-700 mb-1.5" htmlFor="email">
+              Email address
+            </label>
             <input
               id="email"
               type="email"

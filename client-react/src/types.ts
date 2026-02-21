@@ -33,3 +33,10 @@ export interface SignoffEntry {
 // The `errors` field from a `422 Unprocessable Content` response
 // Example: { email: ['The email has already been taken.'] }
 export type ValidationErrors = Record<string,string[]>;
+
+export interface Quote {
+  quote: string,                                             
+  initials: string,                                            
+  name: string,
+  title: string,
+}
