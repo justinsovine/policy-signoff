@@ -19,7 +19,11 @@ export function NavBar() {
     <header className="sticky top-0 z-50 bg-white border-b border-zinc-200">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="PolicySignoff" className="w-8 h-8 rounded-lg" />
+          <div className="w-8 h-8 rounded-lg bg-zinc-900 flex items-center justify-center">
+            <span className="text-xs font-bold tracking-tight text-white">
+              PS
+            </span>
+          </div>
           <span className="font-serif text-lg font-medium tracking-tight">
             PolicySignoff
           </span>

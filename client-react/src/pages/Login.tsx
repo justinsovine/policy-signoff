@@ -60,7 +60,9 @@ function BrandPanel() {
     <div className="brand-panel relative hidden lg:flex lg:w-1/2 flex-col justify-between p-12 text-white overflow-hidden">
       <div className="relative z-10">
         <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="PolicySignoff" className="w-9 h-9 rounded-lg" />
+          <div className="w-9 h-9 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center">
+            <span className="text-sm font-bold tracking-tight">PS</span>
+          </div>
           <span className="font-serif text-xl font-medium tracking-tight">
             PolicySignoff
           </span>
@@ -106,7 +108,9 @@ function LoginForm({
 
         {/* Mobile brand mark */}
         <div className="lg:hidden mb-10 flex items-center gap-3">
-          <img src="/logo.png" alt="PolicySignoff" className="w-9 h-9 rounded-lg" />
+          <div className="w-9 h-9 rounded-lg bg-zinc-900 flex items-center justify-center">
+            <span className="text-sm font-bold tracking-tight text-white">PS</span>
+          </div>
           <span className="font-serif text-xl font-medium tracking-tight">
             PolicySignoff
           </span>
@@ -193,7 +197,9 @@ function RegisterForm({
 
         {/* Mobile brand mark */}
         <div className="lg:hidden mb-10 flex items-center gap-3">
-          <img src="/logo.png" alt="PolicySignoff" className="w-9 h-9 rounded-lg" />
+          <div className="w-9 h-9 rounded-lg bg-zinc-900 flex items-center justify-center">
+            <span className="text-sm font-bold tracking-tight text-white">PS</span>
+          </div>
           <span className="font-serif text-xl font-medium tracking-tight">
             PolicySignoff
           </span>
