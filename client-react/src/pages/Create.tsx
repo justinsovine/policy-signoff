@@ -1,5 +1,5 @@
 import { User as UserType, Policy as PolicyType } from "@/types";
-import { MainContainer, NavBar } from "@/components/Global.tsx";
+import { MainContainer, NavBar, BackLink } from "@/components/Global.tsx";
 import { Link } from "react-router-dom";
 
 interface CreateProps {
@@ -12,11 +12,7 @@ export function Create({ user, setUser }: CreateProps) {
     <>
       <NavBar />
       <MainContainer>
-        {/* <!-- Back link --> */}
-        <a href="dashboard.html" className="inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors mb-6">
-          <span className="text-lg leading-none">&larr;</span>
-          Back to policies
-        </a>
+        <BackLink />
 
         <h1 className="font-serif text-2xl sm:text-3xl font-semibold tracking-tight mb-2">Create Policy</h1>
         <p className="text-sm text-zinc-500 mb-8">Create a new policy for your organization. All users will be able to view and sign off on it.</p>

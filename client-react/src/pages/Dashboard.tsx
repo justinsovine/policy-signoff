@@ -1,5 +1,6 @@
 import { User as UserType, Policy as PolicyType } from "@/types";
 import { MainContainer, NavBar } from "@/components/Global.tsx";
+import { getStatusInfo } from "@/utils";
 import { Link } from "react-router-dom";
 import { Plus } from 'lucide-react';
 
@@ -150,12 +151,6 @@ function SummaryStats({
   )
 }
 
-// 
-function getStatusInfo(signed: boolean, overdue: boolean) {
-  if (signed) return { policyLabel: 'Signed', policyStyle: 'border-emerald-200 bg-emerald-50 text-emerald-700' };
-  if (overdue) return { policyLabel: 'Overdue', policyStyle: 'border-red-200 bg-red-50 text-red-700' };
-  return { policyLabel: 'Pending', policyStyle: 'border-amber-200 bg-amber-50 text-amber-700' };
-}
 
 function PolicyTable({
   tableData,
@@ -176,7 +171,7 @@ function PolicyTable({
         </div>
 
         {tableData.map((policy) => {
-          const { policyLabel, policyStyle } = getStatusInfo(policy.signed, policy.overdue);
+          const { statusLabel, statusStyle } = getStatusInfo(policy.signed, policy.overdue);
           
           return(
             <Link
@@ -203,8 +198,8 @@ function PolicyTable({
                 </p>
               </div>
               <div className="sm:col-span-2">
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${policyStyle}`}>
-                  {policyLabel}
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusStyle}`}>
+                  {statusLabel}
                 </span>
               </div>
               <div className="sm:col-span-1 flex justify-end">
