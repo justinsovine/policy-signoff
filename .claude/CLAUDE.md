@@ -83,16 +83,24 @@ AWS_URL=http://localhost:9000       # external URL (browser presigned URLs)
 AWS_USE_PATH_STYLE_ENDPOINT=true
 ```
 
+Production uses a separate `.env.production` at the repo root (not committed). See `.env.production.example` for the template and `docs/deployment.md` for setup instructions. MinIO credentials (`MINIO_ROOT_USER`/`MINIO_ROOT_PASSWORD`) must match the AWS credentials (`AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`) — they're the same credentials used by two different services.
+
 ## Docker Compose
 
-**Local development ports:**
+Two separate compose files — `docker-compose.yml` for local dev, `docker-compose.prod.yml` for production (standalone, not an overlay).
+
+**Local development** (`docker compose up`):
 - API: localhost:8000
 - React: localhost:3001
 - Alpine: localhost:3002
 - Vue: localhost:3003
 - MinIO console: localhost:9001 (credentials: minioadmin/minioadmin)
 
-**Production domains:** `policysignoff.justinsovine.com`, `policysignoff-api.justinsovine.com`, `policysignoff-minio.justinsovine.com`
+**Production** (`docker compose -f docker-compose.prod.yml --env-file .env.production up -d`):
+- `policysignoff.justinsovine.com` (React client)
+- `policysignoff-api.justinsovine.com` (Laravel API)
+- `policysignoff-minio.justinsovine.com` (MinIO presigned URL host)
+- SSL terminated upstream (Cloudflare), NGINX on port 80 only
 
 ## Workflow
 

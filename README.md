@@ -61,13 +61,13 @@ A curl-based smoke test also covers all 16 API endpoints including the full file
 
 ## Deployment
 
-The app runs on a Linode VPS behind a host-level NGINX that handles SSL termination. Docker services expose ports directly; NGINX proxies to them. To deploy:
+The app runs on a Linode VPS behind host-level NGINX. SSL is terminated upstream; NGINX proxies to Docker containers on port 80. To deploy:
 
 ```bash
-./deploy/deploy.sh
+./deploy.sh
 ```
 
-The script pulls the latest code, rebuilds the client image with the production API URL baked in, restarts the containers, and runs migrations. See [`docs/deployment.md`](docs/deployment.md) for one-time VPS setup (NGINX config, certbot, MinIO bucket, DNS).
+The script pulls the latest code, rebuilds images, restarts containers, and runs migrations. See [`docs/deployment.md`](docs/deployment.md) for one-time VPS setup (NGINX config, Cloudflare DNS, MinIO bucket).
 
 ## Docs
 
