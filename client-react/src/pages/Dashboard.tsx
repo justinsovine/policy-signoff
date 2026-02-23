@@ -30,46 +30,6 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
       .finally(() => setLoading(false));
   }, [navigate]);
 
-  // Mock data
-  // const tableData: PolicyType[] = [
-  //   {
-  //     id: 1,
-  //     title: '2026 Employee Handbook',
-  //     due_date: '2026-03-01',
-  //     created_by: 'Jane Admin',
-  //     has_file: true,
-  //     signed: false,
-  //     overdue: true,
-  //   },
-  //   {
-  //     id: 2,
-  //     title: 'HIPAA Annual Training',
-  //     due_date: '2026-03-15',
-  //     created_by: 'Jane Admin',
-  //     has_file: true,
-  //     signed: false,
-  //     overdue: false,
-  //   },
-  //   {
-  //     id: 3,
-  //     title: 'Workplace Safety Guidelines',
-  //     due_date: '2026-04-30',
-  //     created_by: 'Mike Manager',
-  //     has_file: false,
-  //     signed: false,
-  //     overdue: false,
-  //   },
-  //   {
-  //     id: 4,
-  //     title: 'Remote Work Policy Update',
-  //     due_date: '2026-02-10',
-  //     created_by: 'Jane Admin',
-  //     has_file: false,
-  //     signed: true,
-  //     overdue: false,
-  //   },
-  // ];
-
   // Render NavBar during loading state so that layout doesn't jump
   if (loading) {
     return (
