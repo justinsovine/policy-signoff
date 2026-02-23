@@ -36,7 +36,7 @@ npm run build      # outputs to dist/
 npm run preview    # preview the production build locally
 ```
 
-`VITE_API_URL` is baked into the bundle at build time. The production build reads from `.env.production` (committed), which points to `https://api.policysignoff.justinsovine.com`.
+`VITE_API_URL` is baked into the bundle at build time. The production build reads from `.env.production` (committed), which points to `https://policysignoff-api.justinsovine.com`.
 
 ## Structure
 

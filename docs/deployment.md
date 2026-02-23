@@ -1,6 +1,6 @@
 # VPS Setup - One-Time Steps
 
-These steps assume a Linode VPS with NGINX and certbot already installed (same host that runs ohiocrashleads.com).
+These steps assume a Linode VPS with NGINX already installed (same host that runs ohiocrashleads.com). SSL is handled by Cloudflare (Flexible mode).
 
 ## 1. Clone the repo
 
@@ -32,32 +32,24 @@ sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-## 4. Get SSL certificates
-
-```bash
-sudo certbot --nginx -d policysignoff.justinsovine.com -d api.policysignoff.justinsovine.com -d minio.policysignoff.justinsovine.com
-```
-
-Certbot will modify the NGINX config to add SSL blocks and redirects.
-
-## 5. First deploy
+## 4. First deploy
 
 ```bash
 chmod +x deploy.sh
 ./deploy.sh
 ```
 
-## 6. Create MinIO bucket
+## 5. Create MinIO bucket
 
 ```bash
 # Install mc (MinIO client) if not already installed
 # https://min.io/docs/minio/linux/reference/minio-mc.html
 
-mc alias set policysignoff https://minio.policysignoff.justinsovine.com ACCESS_KEY SECRET_KEY
+mc alias set policysignoff https://policysignoff-minio.justinsovine.com ACCESS_KEY SECRET_KEY
 mc mb policysignoff/policysignoff
 ```
 
-## 7. Seed the database (optional)
+## 6. Seed the database (optional)
 
 ```bash
 docker compose -f docker-compose.prod.yml --env-file .env.production exec api php artisan db:seed
@@ -65,8 +57,8 @@ docker compose -f docker-compose.prod.yml --env-file .env.production exec api ph
 
 ## DNS
 
-Make sure these A records point to the VPS IP:
+Make sure these A records point to the VPS IP (proxied through Cloudflare):
 
 - `policysignoff.justinsovine.com`
-- `api.policysignoff.justinsovine.com`
-- `minio.policysignoff.justinsovine.com`
+- `policysignoff-api.justinsovine.com`
+- `policysignoff-minio.justinsovine.com`

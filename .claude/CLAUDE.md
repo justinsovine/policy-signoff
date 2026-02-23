@@ -92,7 +92,7 @@ AWS_USE_PATH_STYLE_ENDPOINT=true
 - Vue: localhost:3003
 - MinIO console: localhost:9001 (credentials: minioadmin/minioadmin)
 
-**Production domains:** `{react,alpine,vue,api,minio}.policysignoff.justinsovine.com`
+**Production domains:** `policysignoff.justinsovine.com`, `policysignoff-api.justinsovine.com`, `policysignoff-minio.justinsovine.com`
 
 ## Workflow
 
