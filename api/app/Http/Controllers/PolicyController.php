@@ -78,6 +78,7 @@ class PolicyController extends Controller
             if ($signoff) {
                 return [
                     'user' => $u->name,
+                    'user_id' => $u->id,
                     'signed_at' => $signoff->signed_at->utc()->toIso8601ZuluString(),
                     'overdue' => false,
                 ];
@@ -85,6 +86,7 @@ class PolicyController extends Controller
 
             return [
                 'user' => $u->name,
+                'user_id' => $u->id,
                 'signed_at' => null,
                 'overdue' => $policy->due_date->lt($today),
             ];

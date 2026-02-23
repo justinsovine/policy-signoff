@@ -30,6 +30,7 @@ export interface PolicyDetail extends Policy {
 // A single user's sign-off status within a PolicyDetail
 export interface SignoffEntry {
   user: string; // Full name
+  user_id: number;
   signed_at: string | null;
   overdue: boolean;
 }

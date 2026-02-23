@@ -1,6 +1,10 @@
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+
+import { api, ApiError } from "@/api";
 import { BackLink,MainContainer, NavBar } from "@/components/Global";
-import { PolicyDetail as PolicyDetailType,User as UserType } from "@/types";
-import { formatDate, getAvatarColor, getInitials, getStatusInfo } from "@/utils";
+import { PolicyDetail as PolicyDetailType, User as UserType } from "@/types";
+import { formatDate, formatDateTime, getAvatarColor, getInitials, getStatusInfo } from "@/utils";
 
 interface DetailProps {
   user: UserType | null;
@@ -9,37 +13,56 @@ interface DetailProps {
 
 // Shows a policy's details and sign-off status.
 export function Detail({ user, onLogout }: DetailProps) {
-  // Replace with API response (PolicyDetail)
-  const policy: PolicyDetailType = {
-    id: 1,
-    title: "2026 Employee Handbook",
-    description: "All employees must review and acknowledge the updated 2026 Employee Handbook. Key changes include updated remote work guidelines, revised PTO policy, and new data security requirements.",
-    due_date: "2026-03-01",
-    created_by: "Jane Admin",
-    has_file: true,
-    file_name: "Employee_Handbook_2026.pdf",
-    signed: false,
-    overdue: true,
-    signoff_summary: {
-      total_users: 5,
-      signed_count: 3,
-      signoffs: [
-        { user: "Alice Thompson", signed_at: "2026-02-10", overdue: false },
-        { user: "Bob Martinez",   signed_at: "2026-02-11", overdue: false },
-        { user: "Charlie Kim",    signed_at: "2026-02-14", overdue: false },
-        { user: "Dana Williams",  signed_at: null,          overdue: true  },
-        { user: "You",            signed_at: null,          overdue: true  },
-      ],
-    },
-  };
+  const { id } = useParams<{ id: string }>(); // policy ID from the route, e.g. /policies/3
+  const [policyDetail, setPolicyDetail] = useState<PolicyDetailType>();
+  const [loading, setLoading] = useState(true);
+  const [signingOff, setSigningOff] = useState(false); // true while POST is in-flight — disables the button
+  const navigate = useNavigate();
+
+  // Load the policy on mount (and if the ID somehow changes)
+  useEffect(() => {
+    api<PolicyDetailType>('GET', `/api/policies/${id}`)
+      .then((data) => setPolicyDetail(data))
+      .catch((err) => {
+        if (err.status === 401) navigate('/login?expired=1');
+      })
+      .finally(() => setLoading(false));
+  }, [id, navigate]);
+
+  async function handleSignOff() {
+    setSigningOff(true);
+    try {
+      await api('POST', `/api/policies/${id}/signoff`);
+    } catch (err: unknown) {
+      const e = err as ApiError;
+      if (e.status === 401) { navigate('/login?expired=1'); return; }
+      if (e.status !== 409) { setSigningOff(false); return; } // unexpected error (bail)
+      // 409 means already signed (e.g. double-click race). treat it as success and re-fetch
+    }
+    // Re-fetch the full policy so the badge, confirmation box, and table all update together
+    api<PolicyDetailType>('GET', `/api/policies/${id}`)
+      .then((data) => setPolicyDetail(data))
+      .catch((err) => { if (err.status === 401) navigate('/login?expired=1'); })
+      .finally(() => setSigningOff(false));
+  }
+
+  if (loading || !policyDetail) return null;
 
   return (
     <>
       <NavBar user={user} onLogout={onLogout} />
       <MainContainer>
         <BackLink />
-        <PolicyHeader policy={policy} />
-        <SignoffSummary signoffSummary={policy.signoff_summary} />
+        <PolicyHeader
+          policy={policyDetail}
+          currentUser={user}
+          onSignOff={handleSignOff}
+          signingOff={signingOff}
+        />
+        <SignoffSummary
+          signoffSummary={policyDetail.signoff_summary}
+          currentUser={user}
+        />
       </MainContainer>
     </>
   );
@@ -47,9 +70,14 @@ export function Detail({ user, onLogout }: DetailProps) {
 
 interface PolicyHeaderProps {
   policy: PolicyDetailType;
+  currentUser: UserType | null;
+  onSignOff: () => void;
+  signingOff: boolean;
 }
 // Policy info card with the sign-off action.
-function PolicyHeader({ policy }: PolicyHeaderProps) {
+function PolicyHeader({ policy, currentUser, onSignOff, signingOff }: PolicyHeaderProps) {
+  const { statusLabel, statusStyle } = getStatusInfo(policy.signed, policy.overdue);
+
   return(
     <>
       {/* Policy Header */}
@@ -59,9 +87,12 @@ function PolicyHeader({ policy }: PolicyHeaderProps) {
           <h1 className="font-serif text-2xl sm:text-3xl font-semibold tracking-tight">
             {policy.title}
           </h1>
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border border-red-200 bg-red-50 text-red-700 whitespace-nowrap self-start">
-            Overdue
-          </span>
+          {(policy.signed || policy.overdue) && (
+            // Only show badge for Signed or Overdue
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap self-start ${statusStyle}`}>
+              {statusLabel}
+            </span>
+          )}
         </div>
 
         {/* Metadata */}
@@ -118,13 +149,40 @@ function PolicyHeader({ policy }: PolicyHeaderProps) {
           </p>
         </div>
 
-        {/* Sign Off Button */}
-        <button className="w-full h-12 bg-zinc-900 text-white text-sm font-semibold rounded-lg hover:bg-zinc-800 transition-colors">
-          Sign Off on This Policy
-        </button>
-        <p className="mt-2 text-center text-xs text-zinc-400">
-          By signing off, you acknowledge that you have read and understood this policy
-        </p>
+        {/* Sign-off action */}
+        {policy.signed ? (() => {
+          // Pull the current user's signed_at from the summary to show in the confirmation box
+          // IIFE (Immediately Invoked Function Expression) used so we can declare signedAt before returning JSX
+          const signedAt = policy.signoff_summary.signoffs.find((s) => s.user_id === currentUser?.id)?.signed_at ?? null;
+          return (
+            <div className="border border-emerald-200 bg-emerald-50 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border border-emerald-200 bg-white text-emerald-700 self-start">
+                Signed
+              </span>
+              <div>
+                <p className="text-sm font-medium text-emerald-900">
+                  You signed off on this policy
+                </p>
+                <p className="text-xs text-emerald-700">
+                  {formatDateTime(signedAt)}
+                </p>
+              </div>
+            </div>
+          );
+        })() : (
+          <>
+            <button
+              onClick={onSignOff}
+              disabled={signingOff}
+              className="w-full h-12 bg-zinc-900 text-white text-sm font-semibold rounded-lg hover:bg-zinc-800 transition-colors disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
+            >
+              Sign Off on This Policy
+            </button>
+            <p className="mt-2 text-center text-xs text-zinc-400">
+              By signing off, you acknowledge that you have read and understood this policy
+            </p>
+          </>
+        )}
 
       </div>
     </>
@@ -133,9 +191,10 @@ function PolicyHeader({ policy }: PolicyHeaderProps) {
 
 interface SignoffSummaryProps {
   signoffSummary: PolicyDetailType['signoff_summary'];
+  currentUser: UserType | null;
 }
 // Lists sign-off status for each user on this policy.
-function SignoffSummary({ signoffSummary }: SignoffSummaryProps) {
+function SignoffSummary({ signoffSummary, currentUser }: SignoffSummaryProps) {
   return(
     <>
       {/* Sign-off Summary */}
@@ -165,23 +224,26 @@ function SignoffSummary({ signoffSummary }: SignoffSummaryProps) {
           </div>
 
           {signoffSummary.signoffs.map((data) => {
-            const initials    = getInitials(data.user);
+            const isCurrentUser = data.user_id === currentUser?.id;
+            const displayName = isCurrentUser ? `${data.user} (You)` : data.user;
+            const initials = getInitials(data.user); // always from the real name, not displayName
             const avatarColor = getAvatarColor(data.user);
-            const signed_at   = formatDate(data.signed_at);
-            const signed      = data.signed_at !== null;
+            const signed_at = formatDate(data.signed_at);
+            const signed = data.signed_at !== null;
             const { statusLabel, statusStyle } = getStatusInfo(signed, data.overdue);
 
             return (
+            // Highlight the current user's row so it stands out at a glance
             <div
-              key={data.user}
-              className="grid sm:grid-cols-12 gap-2 sm:gap-4 px-5 py-3.5 border-b border-zinc-100 items-center"
+              key={data.user_id}
+              className={`grid sm:grid-cols-12 gap-2 sm:gap-4 px-5 py-3.5 border-b border-zinc-100 items-center${isCurrentUser ? ' bg-zinc-50/50' : ''}`}
             >
               <div className="sm:col-span-5 flex items-center gap-3">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold ${avatarColor}`}>
                   {initials}
                 </div>
                 <span className="text-sm font-medium text-zinc-900">
-                  {data.user}
+                  {displayName}
                 </span>
               </div>
               <div className="sm:col-span-4">
