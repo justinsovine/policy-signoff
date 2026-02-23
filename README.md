@@ -61,8 +61,19 @@ A curl-based smoke test covers all 16 API endpoints including the full file uplo
 
 A Postman collection is in [`postman/`](postman/) covering all endpoints with Sanctum cookie auth pre-wired. Import the collection, run "Auth / 1. CSRF Cookie" then "Auth / 2. Login", and the rest of the requests are ready to use. Requires cookie handling enabled for localhost in Postman settings.
 
+## Deployment
+
+The app runs on a Linode VPS behind a host-level NGINX that handles SSL termination. Docker services expose ports directly; NGINX proxies to them. To deploy:
+
+```bash
+./deploy/deploy.sh
+```
+
+The script pulls the latest code, rebuilds the client image with the production API URL baked in, restarts the containers, and runs migrations. See [`deploy/SETUP.md`](deploy/SETUP.md) for one-time VPS setup (NGINX config, certbot, MinIO bucket, DNS).
+
 ## Docs
 
 - [`docs/api-spec.md`](docs/api-spec.md) — API routes, data model, response shapes, auth and file upload patterns
 - [`docs/client-guide.md`](docs/client-guide.md) — Step-by-step frontend build guide for all three clients
 - [`docs/mockups/`](docs/mockups/) — Static HTML+Tailwind mockups with all UI states
+- [`deploy/SETUP.md`](deploy/SETUP.md) — One-time VPS setup instructions
