@@ -151,7 +151,7 @@ function PolicyHeader({ policy, currentUser, onDownload, onSignOff, signingOff }
         <div className="mb-6 pb-6 border-b border-zinc-100">
           <button
             onClick={onDownload}
-            className="inline-flex items-center gap-2 h-9 px-4 text-sm font-medium text-zinc-700 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors"
+            className="inline-flex items-center gap-2 h-9 px-4 text-sm font-medium text-zinc-700 bg-white border border-zinc-200 rounded-lg cursor-pointer hover:bg-zinc-50 transition-colors"
           >
             <span className="text-base leading-none">
               &darr;
