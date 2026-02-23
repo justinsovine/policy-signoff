@@ -13,6 +13,18 @@ export function getInitials(name: string): string {
   return (parts.length > 1 ? first + last : first).toUpperCase(); // Combine if 2+ words, otherwise just use first initial
 }
 
+// Formats an ISO date string into a long readable format, e.g. "February 17, 2026 at 10:00 AM".
+export function formatDateTime(dateString: string | null): string {
+  if (!dateString) return '';
+  return new Date(dateString).toLocaleString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
 // Formats an ISO date string into a readable format, e.g. "Feb 10, 2026".
 export function formatDate(dateString: string | null): string {
   if (!dateString) return '-'; // Return a dash if the user hasn't signed yet

@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { api } from "@/api";
 import { BackLink,MainContainer, NavBar } from "@/components/Global";
 import { PolicyDetail as PolicyDetailType, User as UserType } from "@/types";
-import { formatDate, getAvatarColor, getInitials, getStatusInfo } from "@/utils";
+import { formatDate, formatDateTime, getAvatarColor, getInitials, getStatusInfo } from "@/utils";
 
 interface DetailProps {
   user: UserType | null;
@@ -16,28 +16,48 @@ export function Detail({ user, onLogout }: DetailProps) {
   const { id } = useParams<{ id: string }>(); // Get policy ID from URL
   const [policyDetail, setPolicyDetail] = useState<PolicyDetailType>();
   const [loading, setLoading] = useState(true);
+  const [signingOff, setSigningOff] = useState(false);
   const navigate = useNavigate();
 
-  // Fetch policies data from API
+  // Fetch policy data from API
   useEffect(() => {
     api<PolicyDetailType>('GET', `/api/policies/${id}`)
       .then((data) => setPolicyDetail(data))
       .catch((err) => {
-        if (err.status == 401) {
-          navigate('/login?expired=1');
-        }
+        if (err.status === 401) navigate('/login?expired=1');
       })
       .finally(() => setLoading(false));
   }, [id, navigate]);
 
-  if (loading || !policyDetail) return null;     
+  // Sign the policy
+  async function handleSignOff() {
+    setSigningOff(true);
+    try {
+      await api('POST', `/api/policies/${id}/signoff`);
+    } catch (err: any) {
+      if (err.status === 401) { navigate('/login?expired=1'); return; }
+      if (err.status !== 409) { setSigningOff(false); return; }
+      // 409 = already signed, fall through to re-fetch
+    }
+    api<PolicyDetailType>('GET', `/api/policies/${id}`)
+      .then((data) => setPolicyDetail(data))
+      .catch((err) => { if (err.status === 401) navigate('/login?expired=1'); })
+      .finally(() => setSigningOff(false));
+  }
+
+  if (loading || !policyDetail) return null;
 
   return (
     <>
       <NavBar user={user} onLogout={onLogout} />
       <MainContainer>
         <BackLink />
-        <PolicyHeader policy={policyDetail} />
+        <PolicyHeader
+          policy={policyDetail}
+          currentUser={user}
+          onSignOff={handleSignOff}
+          signingOff={signingOff}
+        />
         <SignoffSummary
           signoffSummary={policyDetail.signoff_summary}
           currentUser={user}
@@ -49,9 +69,14 @@ export function Detail({ user, onLogout }: DetailProps) {
 
 interface PolicyHeaderProps {
   policy: PolicyDetailType;
+  currentUser: UserType | null;
+  onSignOff: () => void;
+  signingOff: boolean;
 }
 // Policy info card with the sign-off action.
-function PolicyHeader({ policy }: PolicyHeaderProps) {
+function PolicyHeader({ policy, currentUser, onSignOff, signingOff }: PolicyHeaderProps) {
+  const { statusLabel, statusStyle } = getStatusInfo(policy.signed, policy.overdue);
+
   return(
     <>
       {/* Policy Header */}
@@ -61,9 +86,11 @@ function PolicyHeader({ policy }: PolicyHeaderProps) {
           <h1 className="font-serif text-2xl sm:text-3xl font-semibold tracking-tight">
             {policy.title}
           </h1>
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border border-red-200 bg-red-50 text-red-700 whitespace-nowrap self-start">
-            Overdue
-          </span>
+          {(policy.signed || policy.overdue) && (
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap self-start ${statusStyle}`}>
+              {statusLabel}
+            </span>
+          )}
         </div>
 
         {/* Metadata */}
@@ -120,13 +147,38 @@ function PolicyHeader({ policy }: PolicyHeaderProps) {
           </p>
         </div>
 
-        {/* Sign Off Button */}
-        <button className="w-full h-12 bg-zinc-900 text-white text-sm font-semibold rounded-lg hover:bg-zinc-800 transition-colors">
-          Sign Off on This Policy
-        </button>
-        <p className="mt-2 text-center text-xs text-zinc-400">
-          By signing off, you acknowledge that you have read and understood this policy
-        </p>
+        {/* Sign-off action */}
+        {policy.signed ? (() => {
+          const signedAt = policy.signoff_summary.signoffs.find((s) => s.user_id === currentUser?.id)?.signed_at ?? null;
+          return (
+            <div className="border border-emerald-200 bg-emerald-50 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border border-emerald-200 bg-white text-emerald-700 self-start">
+                Signed
+              </span>
+              <div>
+                <p className="text-sm font-medium text-emerald-900">
+                  You signed off on this policy
+                </p>
+                <p className="text-xs text-emerald-700">
+                  {formatDateTime(signedAt)}
+                </p>
+              </div>
+            </div>
+          );
+        })() : (
+          <>
+            <button
+              onClick={onSignOff}
+              disabled={signingOff}
+              className="w-full h-12 bg-zinc-900 text-white text-sm font-semibold rounded-lg hover:bg-zinc-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              Sign Off on This Policy
+            </button>
+            <p className="mt-2 text-center text-xs text-zinc-400">
+              By signing off, you acknowledge that you have read and understood this policy
+            </p>
+          </>
+        )}
 
       </div>
     </>
@@ -168,7 +220,8 @@ function SignoffSummary({ signoffSummary, currentUser }: SignoffSummaryProps) {
           </div>
 
           {signoffSummary.signoffs.map((data) => {
-            const displayName = data.user_id === currentUser?.id ? 'You' : data.user;
+            const isCurrentUser = data.user_id === currentUser?.id;
+            const displayName = isCurrentUser ? `${data.user} (You)` : data.user;
             const initials    = getInitials(data.user);
             const avatarColor = getAvatarColor(data.user);
             const signed_at   = formatDate(data.signed_at);
@@ -178,7 +231,7 @@ function SignoffSummary({ signoffSummary, currentUser }: SignoffSummaryProps) {
             return (
             <div
               key={data.user}
-              className="grid sm:grid-cols-12 gap-2 sm:gap-4 px-5 py-3.5 border-b border-zinc-100 items-center"
+              className={`grid sm:grid-cols-12 gap-2 sm:gap-4 px-5 py-3.5 border-b border-zinc-100 items-center${isCurrentUser ? ' bg-zinc-50/50' : ''}`}
             >
               <div className="sm:col-span-5 flex items-center gap-3">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold ${avatarColor}`}>
