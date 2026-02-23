@@ -67,11 +67,11 @@ The app runs on a Linode VPS behind a host-level NGINX that handles SSL terminat
 ./deploy/deploy.sh
 ```
 
-The script pulls the latest code, rebuilds the client image with the production API URL baked in, restarts the containers, and runs migrations. See [`deploy/SETUP.md`](deploy/SETUP.md) for one-time VPS setup (NGINX config, certbot, MinIO bucket, DNS).
+The script pulls the latest code, rebuilds the client image with the production API URL baked in, restarts the containers, and runs migrations. See [`docs/deployment.md`](docs/deployment.md) for one-time VPS setup (NGINX config, certbot, MinIO bucket, DNS).
 
 ## Docs
 
 - [`docs/api-spec.md`](docs/api-spec.md) - API routes, data model, response shapes, auth and file upload patterns
 - [`docs/mockups/`](docs/mockups/) - Static HTML+Tailwind mockups with all UI states
 - [`docs/roadmap.md`](docs/roadmap.md) - Ideas for continuing to grow the project
-- [`deploy/SETUP.md`](deploy/SETUP.md) - One-time VPS setup instructions
+- [`docs/deployment.md`](docs/deployment.md) - One-time VPS setup instructions
