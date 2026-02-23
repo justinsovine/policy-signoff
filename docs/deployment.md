@@ -6,8 +6,8 @@ These steps assume a Linode VPS with NGINX and certbot already installed (same h
 
 ```bash
 cd /var/www
-git clone git@github.com:justinsovine/policysignoff.git
-cd policysignoff
+git clone git@github.com:justinsovine/policy-signoff.git
+cd policy-signoff
 ```
 
 ## 2. Create production env file
