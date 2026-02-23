@@ -38,7 +38,10 @@ export function Detail({ user, onLogout }: DetailProps) {
       <MainContainer>
         <BackLink />
         <PolicyHeader policy={policyDetail} />
-        <SignoffSummary signoffSummary={policyDetail.signoff_summary} />
+        <SignoffSummary
+          signoffSummary={policyDetail.signoff_summary}
+          currentUser={user}
+        />
       </MainContainer>
     </>
   );
@@ -132,9 +135,10 @@ function PolicyHeader({ policy }: PolicyHeaderProps) {
 
 interface SignoffSummaryProps {
   signoffSummary: PolicyDetailType['signoff_summary'];
+  currentUser: UserType | null;
 }
 // Lists sign-off status for each user on this policy.
-function SignoffSummary({ signoffSummary }: SignoffSummaryProps) {
+function SignoffSummary({ signoffSummary, currentUser }: SignoffSummaryProps) {
   return(
     <>
       {/* Sign-off Summary */}
@@ -164,6 +168,7 @@ function SignoffSummary({ signoffSummary }: SignoffSummaryProps) {
           </div>
 
           {signoffSummary.signoffs.map((data) => {
+            const displayName = data.user_id === currentUser?.id ? 'You' : data.user;
             const initials    = getInitials(data.user);
             const avatarColor = getAvatarColor(data.user);
             const signed_at   = formatDate(data.signed_at);
@@ -180,7 +185,7 @@ function SignoffSummary({ signoffSummary }: SignoffSummaryProps) {
                   {initials}
                 </div>
                 <span className="text-sm font-medium text-zinc-900">
-                  {data.user}
+                  {displayName}
                 </span>
               </div>
               <div className="sm:col-span-4">
