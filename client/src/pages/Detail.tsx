@@ -29,13 +29,20 @@ export function Detail({ user, onLogout }: DetailProps) {
       .finally(() => setLoading(false));
   }, [id, navigate]);
 
-  // Handles downloading the attached policy document via presigned S3 URL
+  // Handles downloading the attached policy document via presigned S3 URL.
+  // Fetches as a blob and triggers a named download — the download attribute is ignored cross-origin.
   async function handleDownload() {
     try {
-      const { download_url } = await api<{ download_url: string; file_name: string }>(
+      const { download_url, file_name } = await api<{ download_url: string; file_name: string }>(
         'GET', `/api/policies/${id}/download-url`
       );
-      window.open(download_url, '_blank');
+      const blob = await fetch(download_url).then((r) => r.blob());
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = file_name;
+      a.click();
+      URL.revokeObjectURL(objectUrl);
     } catch (err: unknown) {
       const e = err as ApiError;
       if (e.status === 401) navigate('/login?expired=1');
