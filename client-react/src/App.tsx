@@ -1,6 +1,6 @@
 import '@/App.css';
 
-import { useEffect, useRef, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 
 import { api } from '@/api';
@@ -12,7 +12,7 @@ import { User as UserType } from '@/types';
 
 interface RequireAuthProps {
   user: UserType | null;
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 // Renders children if logged in, redirects if not
