@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
 import { BackLink,MainContainer, NavBar } from "@/components/Global";
-import { Policy as PolicyType,User as UserType } from "@/types";
+import { Policy as PolicyType, User as UserType } from "@/types";
 
 interface CreateProps {
   user: UserType | null;

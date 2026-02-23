@@ -1,6 +1,6 @@
 import { BackLink,MainContainer, NavBar } from "@/components/Global";
 import { PolicyDetail as PolicyDetailType,User as UserType } from "@/types";
-import { formatDate,getAvatarColor, getInitials, getStatusInfo } from "@/utils";
+import { formatDate, getAvatarColor, getInitials, getStatusInfo } from "@/utils";
 
 interface DetailProps {
   user: UserType | null;
