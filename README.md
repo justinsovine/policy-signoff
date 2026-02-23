@@ -20,7 +20,7 @@ Three separate frontend clients consume the same Laravel API, demonstrating the 
 
 | Client | Stack | URL |
 |--------|-------|-----|
-| `client-react/` | React + Vite + React Router | [policysignoff.justinsovine.com](https://policysignoff.justinsovine.com) |
+| `client/` | React + Vite + React Router | [policysignoff.justinsovine.com](https://policysignoff.justinsovine.com) |
 | `api/` | Laravel 12 + Sanctum + MinIO | [api.policysignoff.justinsovine.com](https://api.policysignoff.justinsovine.com) |
 
 Auth is cookie-based via Laravel Sanctum (no tokens, no localStorage). The API is fully documented in [`docs/api-spec.md`](docs/api-spec.md).
@@ -43,7 +43,7 @@ docker compose exec minio mc mb local/policysignoff
 |---------|-----|
 | React client | http://localhost:3001 |
 | API | http://localhost:8000 |
-| MinIO console | http://localhost:9001 |
+| MinIO console | http://localhost:9001 (minioadmin / minioadmin) |
 
 Default seed credentials: `jane@example.com` / `password` (and `alice@example.com`, `bob@example.com`, etc.)
 
