@@ -1,11 +1,5 @@
 # Production overrides — run with:
-#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-#
-# Prerequisites on the VPS:
-#   - Set AWS_URL, AWS_ENDPOINT, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY,
-#     APP_KEY, DB_PASSWORD in a .env file or as host env vars before running
-#   - MinIO bucket created: mc mb local/policysignoff
-#   - SSL certs via certbot (or replace nginx with Caddy for auto-SSL)
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.production up -d
 
 services:
   api:
@@ -21,7 +15,7 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - SESSION_DRIVER=database
       - SESSION_DOMAIN=.justinsovine.com
-      - SANCTUM_STATEFUL_DOMAINS=policysignoff.justinsovine.com,alpine.policysignoff.justinsovine.com,vue.policysignoff.justinsovine.com
+      - SANCTUM_STATEFUL_DOMAINS=policysignoff.justinsovine.com
       - FILESYSTEM_DISK=s3
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
@@ -35,6 +29,8 @@ services:
     build:
       context: ./client
       dockerfile: Dockerfile.prod
+      args:
+        VITE_API_URL: https://api.policysignoff.justinsovine.com
     ports:
       - "3001:80"
     volumes: []
@@ -42,19 +38,10 @@ services:
     networks:
       - policysignoff
 
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-    depends_on:
-      - api
-      - client
-    networks:
-      - policysignoff
+  minio:
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
 
 networks:
   policysignoff:
