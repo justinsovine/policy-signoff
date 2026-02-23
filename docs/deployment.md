@@ -20,7 +20,7 @@ nano .env.production
 Fill in `APP_KEY`, `DB_PASSWORD`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `MINIO_ROOT_PASSWORD`. Generate an app key with:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.production run --rm api php artisan key:generate --show
+docker compose -f docker-compose.prod.yml --env-file .env.production run --rm --no-deps api php artisan key:generate --show
 ```
 
 ## 3. Set up host NGINX
@@ -60,7 +60,7 @@ mc mb policysignoff/policysignoff
 ## 7. Seed the database (optional)
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.production exec api php artisan db:seed
+docker compose -f docker-compose.prod.yml --env-file .env.production exec api php artisan db:seed
 ```
 
 ## DNS
