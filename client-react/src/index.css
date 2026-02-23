@@ -1,14 +1,69 @@
-@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
 
 @import "tailwindcss";
 
+/* Custom font and animation tokens registered with Tailwind. */
 @theme {
   --font-serif: 'Newsreader', serif;
   --font-sans: 'Plus Jakarta Sans', sans-serif;
+
+  /* Fade transitions */
+  --animate-fadeUp: fadeUp 0.5s ease-out;
+  --animate-fadeRight: fadeRight 0.5s ease-out;
+  --animate-fadeRight1s: fadeRight 1s ease-out;
 }
 
+/* Global base: font family, text color, and antialiasing. */
 :root {
   font-family: 'Plus Jakarta Sans', sans-serif;
+  color: theme(--color-zinc-900);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Login */
+.brand-panel {
+  background:
+    radial-gradient(ellipse at 20% 80%, rgba(39, 39, 42, 1) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(63, 63, 70, 0.6) 0%, transparent 50%),
+    linear-gradient(160deg, #18181b 0%, #09090b 100%);
+}
+
+/* Subtle crosshatch texture layered over the gradient. */
+.brand-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+/* Replace browser default outline with a tight zinc ring. */
+input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #18181b;
+}
+
+/* Slide up from 8px below while fading in. */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Slide right from 8px left while fading in. */
+@keyframes fadeRight {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
