@@ -1,4 +1,4 @@
-import { type SubmitEvent, useRef, useState } from "react";
+import { type ChangeEvent, SubmitEvent, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { api, ApiError } from "@/api";
@@ -46,7 +46,7 @@ export function Create({ user, onLogout }: CreateProps) {
   const [errors, setErrors] = useState<ValidationErrors>({}); // keyed by field name, matches Laravel's 422 shape
 
   // Validates the selected file client-side before accepting it
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     const selected = e.target.files?.[0] ?? null; // only care about the first file
     if (!selected) return;
 
@@ -61,10 +61,9 @@ export function Create({ user, onLogout }: CreateProps) {
     }
 
     setFile(selected);
-    setErrors((prev) => {
-      const { file: _, ...rest } = prev; // drop the file key from errors, keep the rest
-      return rest;
-    });
+    setErrors((prev) => Object.fromEntries(
+      Object.entries(prev).filter(([key]) => key !== 'file') // clear the file error now that one is selected
+    ));
   }
 
   // Clears both the React state and the native input (so re-selecting the same file triggers onChange)
@@ -231,7 +230,7 @@ export function Create({ user, onLogout }: CreateProps) {
             {file ? (
               /* File selected */
               <div className={`border rounded-lg p-4 flex items-center gap-4 ${errors.file ? 'border-red-300' : 'border-zinc-200'}`}>
-                <div className="w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center shrink-0">
                   <span className="text-xs font-bold text-zinc-500 uppercase tracking-wide">
                     {file.name.split('.').pop()}
                   </span>
@@ -247,7 +246,7 @@ export function Create({ user, onLogout }: CreateProps) {
                 <button
                   type="button"
                   onClick={handleRemoveFile}
-                  className="text-sm text-zinc-500 hover:text-red-600 transition-colors flex-shrink-0 cursor-pointer"
+                  className="text-sm text-zinc-500 hover:text-red-600 transition-colors shrink-0 cursor-pointer"
                 >
                   Remove
                 </button>
