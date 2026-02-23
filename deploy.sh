@@ -29,8 +29,9 @@ $COMPOSE build --no-cache client
 echo "==> Starting containers..."
 $COMPOSE up -d
 
-echo "==> Waiting for API container to be ready..."
-sleep 5
+echo "==> Waiting for MySQL to be healthy..."
+$COMPOSE exec mysql mysqladmin ping --wait=30 --silent
+sleep 2
 
 echo "==> Running database migrations..."
 $COMPOSE exec api php artisan migrate --force
