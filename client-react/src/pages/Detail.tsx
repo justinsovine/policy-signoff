@@ -235,7 +235,7 @@ function SignoffSummary({ signoffSummary, currentUser }: SignoffSummaryProps) {
             return (
             // Highlight the current user's row so it stands out at a glance
             <div
-              key={data.user}
+              key={data.user_id}
               className={`grid sm:grid-cols-12 gap-2 sm:gap-4 px-5 py-3.5 border-b border-zinc-100 items-center${isCurrentUser ? ' bg-zinc-50/50' : ''}`}
             >
               <div className="sm:col-span-5 flex items-center gap-3">
