@@ -31,9 +31,9 @@ services:
       - AWS_URL=https://minio.policysignoff.justinsovine.com
       - AWS_USE_PATH_STYLE_ENDPOINT=true
 
-  client-react:
+  client:
     build:
-      context: ./client-react
+      context: ./client
       dockerfile: Dockerfile.prod
     ports:
       - "3001:80"
@@ -52,7 +52,7 @@ services:
       - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - api
-      - client-react
+      - client
     networks:
       - policysignoff
 

@@ -19,7 +19,7 @@ npm run dev        # http://localhost:5173
 Or via Docker Compose from the repo root (runs on port 3001):
 
 ```bash
-docker compose up -d client-react
+docker compose up -d client
 ```
 
 The app expects the API at `http://localhost:8000` by default. Override via `.env`:

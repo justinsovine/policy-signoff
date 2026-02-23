@@ -41,14 +41,14 @@ services:
     networks:
       - policysignoff
 
-  client-react:
+  client:
     build:
-      context: ./client-react
+      context: ./client
       dockerfile: Dockerfile.dev
     ports:
       - "3001:5173"
     volumes:
-      - ./client-react:/app
+      - ./client:/app
       - /app/node_modules
     environment:
       - VITE_API_URL=http://localhost:8000
