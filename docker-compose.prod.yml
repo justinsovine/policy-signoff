@@ -38,6 +38,9 @@ services:
     networks:
       - policysignoff
 
+  mysql:
+    ports: []
+
   minio:
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
