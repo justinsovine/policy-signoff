@@ -1,7 +1,25 @@
-import { useState } from "react";
-import { useSearchParams } from 'react-router-dom';
+import { type SubmitEvent, useState } from "react";
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { Quote as QuoteType,User as UserType } from "@/types";
+import { api } from "@/api";
+import { Quote as QuoteType,User as UserType, ValidationErrors } from "@/types";
+
+// api() throws { status, ...body } — a plain object, not an Error subclass —
+// so we need a type guard to safely narrow the catch parameter
+interface ApiValidationError {
+  status: number;
+  errors: ValidationErrors;
+}
+
+function isValidationError(err: unknown): err is ApiValidationError {
+  return (
+    typeof err === 'object'
+    && err !== null
+    && typeof (err as ApiValidationError).status === 'number'
+    && typeof (err as ApiValidationError).errors === 'object'
+    && (err as ApiValidationError).errors !== null
+  );
+}
 
 interface LoginProps {
   user: UserType | null;
@@ -9,7 +27,7 @@ interface LoginProps {
 }
 
 // Auth page toggling between login and register forms.
-export function Login({ user, setUser }: LoginProps) {
+export function Login({ setUser }: LoginProps) {
   const [mode, setMode] = useState("login");
   const [searchParams] = useSearchParams();
   const expiredSession = searchParams.get('expired');
@@ -21,10 +39,16 @@ export function Login({ user, setUser }: LoginProps) {
         ? (
           <LoginForm
             setMode={setMode}
+            setUser={setUser}
             expiredSession={expiredSession}
           />
         )
-        : <RegisterForm setMode={setMode} />
+        : (
+          <RegisterForm
+            setMode={setMode}
+            setUser={setUser}
+          />
+        )
       }
     </div>
   );
@@ -64,8 +88,7 @@ function BrandPanel() {
       title: "Legal & Compliance Lead",
     },
   ];
-  const random = Math.floor(Math.random() * quotes.length);
-  const quote = quotes[random];
+  const [quote] = useState(() => quotes[Math.floor(Math.random() * quotes.length)]);
 
   return (
     <div className="brand-panel relative hidden lg:flex lg:w-1/2 flex-col justify-between p-12 text-white overflow-hidden">
@@ -107,14 +130,48 @@ function BrandPanel() {
 // Handles login form inputs and errors.
 function LoginForm({
   setMode,
+  setUser,
   expiredSession,
 }: {
   setMode: (mode: 'login' | 'register') => void;
+  setUser: (user: UserType | null) => void;
   expiredSession: string | null;
 }) {
-  const [errors] = useState<Record<string, string>>({
-    form: "These credentials do not match our records.",
-  });
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<ValidationErrors>({});
+
+  async function handleSubmit(e: SubmitEvent) {
+    e.preventDefault();
+    // Show spinner and clear stale errors before the network round-trip
+    setLoading(true);
+    setErrors({});
+
+    try {
+      // Sanctum requires a CSRF cookie before any state-changing request
+      // Raw fetch() because the XSRF-TOKEN doesn't exist yet for api() to read
+      await fetch(`${import.meta.env.VITE_API_URL}/sanctum/csrf-cookie`, {
+        credentials: 'include',
+      });
+
+      // POST /login returns the authenticated user object on success
+      const data = await api<UserType>('POST', '/login', { email, password });
+
+      // Lift user into app state so protected routes render
+      setUser(data);
+      navigate('/');
+    } catch (err: unknown) {
+      // api() throws { status, ...body } 
+      if (isValidationError(err)) {
+        // If it's a 422 the body contains field-keyed error arrays
+        setErrors(err.errors);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="flex-1 flex items-center justify-center p-6 sm:p-12 animate-fadeUp">
@@ -141,7 +198,10 @@ function LoginForm({
           Sign in to your account to continue
         </p>
 
-        <form className="mt-8 space-y-5">
+        <form
+          className="mt-8 space-y-5"
+          onSubmit={handleSubmit}
+        >
           <div>
             <label
               className="block text-sm font-medium text-zinc-700 mb-1.5"
@@ -152,13 +212,15 @@ function LoginForm({
             <input
               id="email"
               type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="name@company.com"
-              className={`w-full h-10 px-3 text-sm border rounded-lg bg-white placeholder:text-zinc-400 transition-shadow ${errors.form ? 'border-red-300 ring-1 ring-red-300' : 'border-zinc-200'}`}
+              className={`w-full h-10 px-3 text-sm border rounded-lg bg-white placeholder:text-zinc-400 transition-shadow ${errors.email ? 'border-red-300 ring-1 ring-red-300' : 'border-zinc-200'}`}
               required
             />
-            {errors.form && (
+            {errors.email && (
               <p className="mt-1.5 text-sm text-red-600">
-                {errors.form}
+                {errors.email[0]}
               </p>
             )}
           </div>
@@ -175,17 +237,25 @@ function LoginForm({
             <input
               id="password"
               type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
-              className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-white placeholder:text-zinc-400 transition-shadow"
+              className={`w-full h-10 px-3 text-sm border rounded-lg bg-white placeholder:text-zinc-400 transition-shadow ${errors.password ? 'border-red-300 ring-1 ring-red-300' : 'border-zinc-200'}`}
               required
             />
+            {errors.password && (
+              <p className="mt-1.5 text-sm text-red-600">
+                {errors.password[0]}
+              </p>
+            )}
           </div>
 
           <button
             type="submit"
-            className="w-full h-10 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer"
+            disabled={loading}
+            className="w-full h-10 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer disabled:opacity-50"
           >
-            Sign in
+            {loading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
 
@@ -209,13 +279,53 @@ function LoginForm({
 // Handles registration form inputs and errors.
 function RegisterForm({
   setMode,
+  setUser,
 }: {
   setMode: (mode: 'login' | 'register') => void;
+  setUser: (user: UserType | null) => void;
 }) {
-  const [errors] = useState<Record<string, string>>({
-    email: "The email has already been taken.",
-    password: "The password confirmation does not match.",
-  });
+  const navigate = useNavigate();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [passwordConfirmation, setPasswordConfirmation] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<ValidationErrors>({});
+
+  async function handleSubmit(e: SubmitEvent) {
+    e.preventDefault();
+    // Show spinner and clear stale errors
+    setLoading(true);
+    setErrors({});
+
+    try {
+      // Sanctum requires a CSRF cookie before any state-changing request
+      // Raw fetch() because the XSRF-TOKEN doesn't exist yet for api() to read
+      await fetch(`${import.meta.env.VITE_API_URL}/sanctum/csrf-cookie`, {
+        credentials: 'include',
+      });
+
+      // POST /register creates the account and returns the new user password_confirmation is required by Laravel's `confirmed` validation rule
+      const data = await api<UserType>('POST', '/register', {
+        name,
+        email,
+        password,
+        password_confirmation: passwordConfirmation,
+      });
+
+      // Lift user into app state so protected routes render
+      setUser(data);
+      navigate('/');
+    } catch (err: unknown) {
+      // api() throws { status, ...body }
+      if (isValidationError(err)) {
+        // If it's a 422 the body contains field-keyed error arrays
+        setErrors(err.errors);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="flex-1 flex items-center justify-center p-6 sm:p-12 animate-fadeUp">
@@ -240,7 +350,10 @@ function RegisterForm({
           Get started with your organization's policy tracking
         </p>
 
-        <form className="mt-8 space-y-5">
+        <form
+          className="mt-8 space-y-5"
+          onSubmit={handleSubmit}
+        >
           <div>
             <label
               className="block text-sm font-medium text-zinc-700 mb-1.5"
@@ -251,10 +364,17 @@ function RegisterForm({
             <input
               id="name"
               type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               placeholder="Jane Doe"
-              className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-white placeholder:text-zinc-400 transition-shadow"
+              className={`w-full h-10 px-3 text-sm border rounded-lg bg-white placeholder:text-zinc-400 transition-shadow ${errors.name ? 'border-red-300 ring-1 ring-red-300' : 'border-zinc-200'}`}
               required
             />
+            {errors.name && (
+              <p className="mt-1.5 text-sm text-red-600">
+                {errors.name[0]}
+              </p>
+            )}
           </div>
 
           <div>
@@ -267,13 +387,15 @@ function RegisterForm({
             <input
               id="email"
               type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="name@company.com"
               className={`w-full h-10 px-3 text-sm border rounded-lg bg-white placeholder:text-zinc-400 transition-shadow ${errors.email ? 'border-red-300 ring-1 ring-red-300' : 'border-zinc-200'}`}
               required
             />
             {errors.email && (
               <p className="mt-1.5 text-sm text-red-600">
-                {errors.email}
+                {errors.email[0]}
               </p>
             )}
           </div>
@@ -288,13 +410,15 @@ function RegisterForm({
             <input
               id="password"
               type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="Minimum 8 characters"
               className={`w-full h-10 px-3 text-sm border rounded-lg bg-white placeholder:text-zinc-400 transition-shadow ${errors.password ? 'border-red-300 ring-1 ring-red-300' : 'border-zinc-200'}`}
               required
             />
             {errors.password && (
               <p className="mt-1.5 text-sm text-red-600">
-                {errors.password}
+                {errors.password[0]}
               </p>
             )}
           </div>
@@ -309,6 +433,8 @@ function RegisterForm({
             <input
               id="password_confirmation"
               type="password"
+              value={passwordConfirmation}
+              onChange={(e) => setPasswordConfirmation(e.target.value)}
               placeholder="Re-enter your password"
               className="w-full h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-white placeholder:text-zinc-400 transition-shadow"
               required
@@ -317,9 +443,10 @@ function RegisterForm({
 
           <button
             type="submit"
-            className="w-full h-10 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer"
+            disabled={loading}
+            className="w-full h-10 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer disabled:opacity-50"
           >
-            Create account
+            {loading ? 'Creating account...' : 'Create account'}
           </button>
         </form>
 

@@ -1,18 +1,18 @@
 import { Link } from "react-router-dom";
 
 import { BackLink,MainContainer, NavBar } from "@/components/Global";
-import { Policy as PolicyType, User as UserType } from "@/types";
+import { User as UserType } from "@/types";
 
 interface CreateProps {
   user: UserType | null;
-  setUser: (user: UserType | null) => void;
+  onLogout: () => void;
 }
 
 // Form for creating a new policy.
-export function Create({ user, setUser }: CreateProps) {
+export function Create({ user, onLogout }: CreateProps) {
   return (
     <>
-      <NavBar />
+      <NavBar user={user} onLogout={onLogout} />
       <MainContainer>
         <BackLink />
 

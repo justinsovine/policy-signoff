@@ -4,11 +4,11 @@ import { formatDate, getAvatarColor, getInitials, getStatusInfo } from "@/utils"
 
 interface DetailProps {
   user: UserType | null;
-  setUser: (user: UserType | null) => void;
+  onLogout: () => void;
 }
 
 // Shows a policy's details and sign-off status.
-export function Detail({ user, setUser }: DetailProps) {
+export function Detail({ user, onLogout }: DetailProps) {
   // Replace with API response (PolicyDetail)
   const policy: PolicyDetailType = {
     id: 1,
@@ -35,7 +35,7 @@ export function Detail({ user, setUser }: DetailProps) {
 
   return (
     <>
-      <NavBar />
+      <NavBar user={user} onLogout={onLogout} />
       <MainContainer>
         <BackLink />
         <PolicyHeader policy={policy} />

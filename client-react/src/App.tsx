@@ -23,7 +23,7 @@ function RequireAuth({ user, children }: RequireAuthProps) {
   return <>{children}</>;
 }
 
-// Root component; sets up the router.
+// Root component
 function App() {
   return (
     <BrowserRouter>
@@ -49,7 +49,7 @@ function AppRoutes() {
       })
       .catch(() => {
         if (wasLoggedIn.current) {
-          // Session expired. Login page will show the banner
+          // Session expired
           setUser(null);
           navigate('/login?expired=1');
         }
@@ -57,11 +57,14 @@ function AppRoutes() {
       .finally(() => setLoading(false));
   }, [navigate]);
 
-  // Spoof user for development
-  // useEffect(() => {
-  //   setUser({ id: 1, name: 'Dev User', email: 'dev@example.com' });
-  //   setLoading(false);
-  // }, []);
+  // Centralized logout so the session-check effect doesn't race and
+  // show the "session expired" banner after an intentional sign-out
+  async function logout() {
+    wasLoggedIn.current = false;
+    await api('POST', '/logout');
+    setUser(null);
+    navigate('/login');
+  }
 
   if (loading) return null; // Waits until session check finishes
 
@@ -71,7 +74,7 @@ function AppRoutes() {
         path="/"
         element={
           <RequireAuth user={user}>
-            <Dashboard user={user} setUser={setUser} />
+            <Dashboard user={user} onLogout={logout} />
           </RequireAuth>
         }
       />
@@ -85,7 +88,7 @@ function AppRoutes() {
         path="/policies/:id"
         element={
           <RequireAuth user={user}>
-            <Detail user={user} setUser={setUser} />
+            <Detail user={user} onLogout={logout} />
           </RequireAuth>
         }
       />
@@ -93,7 +96,7 @@ function AppRoutes() {
         path="/create"
         element={
           <RequireAuth user={user}>
-            <Create user={user} setUser={setUser} />
+            <Create user={user} onLogout={logout} />
           </RequireAuth>
         }
       />

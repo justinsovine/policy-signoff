@@ -7,11 +7,11 @@ import { getStatusInfo } from "@/utils";
 
 interface DashboardProps {
   user: UserType | null;
-  setUser: (user: UserType | null) => void;
+  onLogout: () => void;
 }
 
 // Policy list page with summary stats and a table of all policies.
-export function Dashboard({ user, setUser }: DashboardProps) {
+export function Dashboard({ user, onLogout }: DashboardProps) {
   // Mock data
   const tableData: PolicyType[] = [
     {
@@ -54,7 +54,7 @@ export function Dashboard({ user, setUser }: DashboardProps) {
 
   return (
     <>
-      <NavBar />
+      <NavBar user={user} onLogout={onLogout} />
       <MainContainer>
         <DashboardHeader />
         <SummaryStats tableData={tableData} />
