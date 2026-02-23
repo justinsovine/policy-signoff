@@ -1,9 +1,11 @@
+// Authenticated user returned by /user
 export interface User {
   id: number;
   name: string;
   email: string
 }
 
+// Policy list item returned by GET /policies
 export interface Policy {
   id: number;
   title: string;
@@ -14,6 +16,7 @@ export interface Policy {
   overdue: boolean;   // Not signed AND past due_date
 }
 
+// Full policy data including description and sign-off list
 export interface PolicyDetail extends Policy {
   description: string;
   file_name?: string;
@@ -24,6 +27,7 @@ export interface PolicyDetail extends Policy {
   };
 }
 
+// A single user's sign-off status within a PolicyDetail
 export interface SignoffEntry {
   user: string; // Full name
   signed_at: string | null;
@@ -34,6 +38,7 @@ export interface SignoffEntry {
 // Example: { email: ['The email has already been taken.'] }
 export type ValidationErrors = Record<string,string[]>;
 
+// Quote displayed on the auth pages
 export interface Quote {
   quote: string,                                             
   initials: string,                                            

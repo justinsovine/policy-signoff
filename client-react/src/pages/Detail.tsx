@@ -1,12 +1,13 @@
-import { User as UserType, PolicyDetail as PolicyDetailType } from "@/types";
-import { MainContainer, NavBar, BackLink } from "@/components/Global.tsx";
-import { getStatusInfo, getAvatarColor, getInitials, formatDate } from "@/utils";
+import { BackLink,MainContainer, NavBar } from "@/components/Global.tsx";
+import { PolicyDetail as PolicyDetailType,User as UserType } from "@/types";
+import { formatDate,getAvatarColor, getInitials, getStatusInfo } from "@/utils";
 
 interface DetailProps {
   user: UserType | null;
   setUser: (user: UserType | null) => void;
 }
 
+// Shows a policy's details and sign-off status.
 export function Detail({ user, setUser }: DetailProps) {
   // Replace with API response (PolicyDetail)
   const policy: PolicyDetailType = {
@@ -47,6 +48,7 @@ export function Detail({ user, setUser }: DetailProps) {
 interface PolicyHeaderProps {
   policy: PolicyDetailType;
 }
+// Policy info card with the sign-off action.
 function PolicyHeader({ policy }: PolicyHeaderProps) {
   return(
     <>
@@ -132,6 +134,7 @@ function PolicyHeader({ policy }: PolicyHeaderProps) {
 interface SignoffSummaryProps {
   signoffSummary: PolicyDetailType['signoff_summary'];
 }
+// Lists sign-off status for each user on this policy.
 function SignoffSummary({ signoffSummary }: SignoffSummaryProps) {
   return(
     <>

@@ -1,12 +1,14 @@
-import { User as UserType, Policy as PolicyType } from "@/types";
-import { MainContainer, NavBar, BackLink } from "@/components/Global.tsx";
 import { Link } from "react-router-dom";
+
+import { BackLink,MainContainer, NavBar } from "@/components/Global.tsx";
+import { Policy as PolicyType,User as UserType } from "@/types";
 
 interface CreateProps {
   user: UserType | null;
   setUser: (user: UserType | null) => void;
 }
 
+// Form for creating a new policy.
 export function Create({ user, setUser }: CreateProps) {
   return (
     <>

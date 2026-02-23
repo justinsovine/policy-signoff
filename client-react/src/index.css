@@ -2,6 +2,7 @@
 
 @import "tailwindcss";
 
+/* Custom font and animation tokens registered with Tailwind. */
 @theme {
   --font-serif: 'Newsreader', serif;
   --font-sans: 'Plus Jakarta Sans', sans-serif;
@@ -12,6 +13,7 @@
   --animate-fadeRight1s: fadeRight 1s ease-out;
 }
 
+/* Global base: font family, text color, and antialiasing. */
 :root {
   font-family: 'Plus Jakarta Sans', sans-serif;
   color: theme(--color-zinc-900);
@@ -27,6 +29,7 @@
     linear-gradient(160deg, #18181b 0%, #09090b 100%);
 }
 
+/* Subtle crosshatch texture layered over the gradient. */
 .brand-panel::before {
   content: '';
   position: absolute;
@@ -35,11 +38,13 @@
   pointer-events: none;
 }
 
+/* Replace browser default outline with a tight zinc ring. */
 input:focus {
   outline: none;
   box-shadow: 0 0 0 2px #18181b;
 }
 
+/* Slide up from 8px below while fading in. */
 @keyframes fadeUp {
   from {
     opacity: 0;
@@ -51,6 +56,7 @@ input:focus {
   }
 }
 
+/* Slide right from 8px left while fading in. */
 @keyframes fadeRight {
   from {
     opacity: 0;

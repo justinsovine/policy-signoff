@@ -4,6 +4,7 @@ import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
+import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import globals from 'globals';
 
 export default [
@@ -32,6 +33,7 @@ export default [
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
       'jsx-a11y': jsxA11y,
+      'simple-import-sort': simpleImportSort,
     },
 
     rules: {
@@ -55,6 +57,10 @@ export default [
 
       // Disable base no-unused-vars; tseslint's version (from recommended) handles this
       'no-unused-vars': 'off',
+
+      // Import sorting
+      'simple-import-sort/imports': 'error',
+      'simple-import-sort/exports': 'error',
 
       // Vite HMR: warn if exports aren't components
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],

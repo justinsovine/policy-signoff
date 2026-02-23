@@ -1,14 +1,16 @@
-import { User as UserType, Policy as PolicyType } from "@/types";
-import { MainContainer, NavBar } from "@/components/Global.tsx";
-import { getStatusInfo } from "@/utils";
-import { Link } from "react-router-dom";
 import { Plus } from 'lucide-react';
+import { Link } from "react-router-dom";
+
+import { MainContainer, NavBar } from "@/components/Global.tsx";
+import { Policy as PolicyType,User as UserType } from "@/types";
+import { getStatusInfo } from "@/utils";
 
 interface DashboardProps {
   user: UserType | null;
   setUser: (user: UserType | null) => void;
 }
 
+// Policy list page with summary stats and a table of all policies.
 export function Dashboard({ user, setUser }: DashboardProps) {
   // Mock data
   const tableData: PolicyType[] = [
@@ -63,7 +65,7 @@ export function Dashboard({ user, setUser }: DashboardProps) {
   );
 }
 
-// ...
+// Page title and "Create Policy" button row.
 export function DashboardHeader() {
   return(
     <>
@@ -88,6 +90,7 @@ export function DashboardHeader() {
   );
 }
 
+// Stat cards summarizing the policy list.
 function SummaryStats({
   tableData,
 } : {
@@ -154,6 +157,7 @@ function SummaryStats({
 }
 
 
+// Policy list table; each row links to the detail page.
 function PolicyTable({
   tableData,
 } : {
@@ -216,6 +220,7 @@ function PolicyTable({
   );
 }
 
+// Note below the policy table.
 function PageFooter() {
   return(
     <>

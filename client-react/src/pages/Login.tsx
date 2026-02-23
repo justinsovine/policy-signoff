@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { User as UserType, Quote as QuoteType } from "@/types";
 import { useSearchParams } from 'react-router-dom';
+
+import { Quote as QuoteType,User as UserType } from "@/types";
 
 interface LoginProps {
   user: UserType | null;
   setUser: (user: UserType | null) => void;
 }
 
+// Auth page toggling between login and register forms.
 export function Login({ user, setUser }: LoginProps) {
   const [mode, setMode] = useState("login");
   const [searchParams] = useSearchParams();
@@ -28,6 +30,7 @@ export function Login({ user, setUser }: LoginProps) {
   );
 }
 
+// Branded panel shown on larger screens.
 function BrandPanel() {
   const quotes: QuoteType[]  = [
     {
@@ -101,6 +104,7 @@ function BrandPanel() {
   );
 }
 
+// Handles login form inputs and errors.
 function LoginForm({
   setMode,
   expiredSession,
@@ -202,6 +206,7 @@ function LoginForm({
   )
 }
 
+// Handles registration form inputs and errors.
 function RegisterForm({
   setMode,
 }: {
@@ -335,6 +340,7 @@ function RegisterForm({
   );
 }
 
+// Banner shown when the user's session has expired.
 function SessionExpired() {
   return (
     <div className="border border-amber-200 bg-amber-50 rounded-lg p-3 mb-6">

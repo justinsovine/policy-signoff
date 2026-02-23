@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 
-// ...
+// Wraps page content with a max-width container and consistent padding.
 export function MainContainer({
   children,
   className = "",
@@ -15,7 +15,7 @@ export function MainContainer({
   );
 }
 
-// ...
+// Sticky top bar with the PS logo and sign-out button.
 export function NavBar() {
   return(
     <header className="sticky top-0 z-50 bg-white border-b border-zinc-200">
@@ -51,7 +51,7 @@ export function NavBar() {
   );
 }
 
-// ...
+// Arrow link back to the dashboard, used on Create and Detail pages.
 export function BackLink() {
   return(
     <>

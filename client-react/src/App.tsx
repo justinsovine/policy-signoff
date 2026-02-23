@@ -1,12 +1,14 @@
 import './App.css';
-import { Login } from './pages/Login.tsx';
+
+import { useEffect, useState } from 'react';
+import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
+
+import { api } from './api';
+import { Create } from './pages/Create.tsx';
 import { Dashboard } from './pages/Dashboard.tsx';
 import { Detail } from './pages/Detail.tsx';
-import { Create } from './pages/Create.tsx';
-import { BrowserRouter, useNavigate, Routes, Route, Navigate } from 'react-router-dom';
-import { api } from './api';
+import { Login } from './pages/Login.tsx';
 import { User as UserType } from './types';
-import { useEffect, useState } from 'react';
 
 interface RequireAuthProps {
   user: UserType | null;
@@ -21,6 +23,7 @@ function RequireAuth({ user, children }: RequireAuthProps) {
   return <>{children}</>;
 }
 
+// Root component; sets up the router.
 function App() {
   return (
     <BrowserRouter>
