@@ -3,7 +3,7 @@ set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENV_FILE="$PROJECT_DIR/.env.production"
-COMPOSE="docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file $ENV_FILE"
+COMPOSE="docker compose -f docker-compose.prod.yml --env-file $ENV_FILE"
 
 cd "$PROJECT_DIR"
 

@@ -1,12 +1,15 @@
-# Production overrides — run with:
-#   docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.production up -d
+# Production compose — standalone file, not an overlay.
+# Run with: docker compose -f docker-compose.prod.yml --env-file .env.production up -d
 
 services:
   api:
     build:
       context: ./api
       dockerfile: Dockerfile.prod
-    volumes: []
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mysql
     environment:
       - APP_ENV=production
       - APP_URL=https://api.policysignoff.justinsovine.com
@@ -27,6 +30,8 @@ services:
       - AWS_ENDPOINT=http://minio:9000
       - AWS_URL=https://minio.policysignoff.justinsovine.com
       - AWS_USE_PATH_STYLE_ENDPOINT=true
+    networks:
+      - policysignoff
 
   client:
     build:
@@ -36,19 +41,37 @@ services:
         VITE_API_URL: https://api.policysignoff.justinsovine.com
     ports:
       - "3001:80"
-    volumes: []
-    environment: []
     networks:
       - policysignoff
 
   mysql:
-    ports: []
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: policysignoff
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - policysignoff
 
   minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      MINIO_CORS_ALLOW_ALL: "on"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - policysignoff
+
+volumes:
+  mysql_data:
+  minio_data:
 
 networks:
   policysignoff:
-    external: false
