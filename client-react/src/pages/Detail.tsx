@@ -1,4 +1,4 @@
-import { BackLink,MainContainer, NavBar } from "@/components/Global.tsx";
+import { BackLink,MainContainer, NavBar } from "@/components/Global";
 import { PolicyDetail as PolicyDetailType,User as UserType } from "@/types";
 import { formatDate,getAvatarColor, getInitials, getStatusInfo } from "@/utils";
 

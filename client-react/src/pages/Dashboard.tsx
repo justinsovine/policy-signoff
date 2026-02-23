@@ -1,7 +1,7 @@
 import { Plus } from 'lucide-react';
 import { Link } from "react-router-dom";
 
-import { MainContainer, NavBar } from "@/components/Global.tsx";
+import { MainContainer, NavBar } from "@/components/Global";
 import { Policy as PolicyType,User as UserType } from "@/types";
 import { getStatusInfo } from "@/utils";
 

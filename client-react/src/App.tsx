@@ -1,14 +1,14 @@
-import './App.css';
+import '@/App.css';
 
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 
-import { api } from './api';
-import { Create } from './pages/Create.tsx';
-import { Dashboard } from './pages/Dashboard.tsx';
-import { Detail } from './pages/Detail.tsx';
-import { Login } from './pages/Login.tsx';
-import { User as UserType } from './types';
+import { api } from '@/api';
+import { Create } from '@/pages/Create';
+import { Dashboard } from '@/pages/Dashboard';
+import { Detail } from '@/pages/Detail';
+import { Login } from '@/pages/Login';
+import { User as UserType } from '@/types';
 
 interface RequireAuthProps {
   user: UserType | null;
