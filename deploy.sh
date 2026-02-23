@@ -20,6 +20,9 @@ git pull origin main
 echo "==> Stopping containers..."
 $COMPOSE down
 
+echo "==> Building api..."
+$COMPOSE build api
+
 echo "==> Building client (no cache)..."
 $COMPOSE build --no-cache client
 
