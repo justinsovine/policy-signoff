@@ -1,6 +1,6 @@
 import '@/App.css';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 
 import { api } from '@/api';
@@ -35,31 +35,33 @@ function App() {
 // Holds auth state and defines all routes
 function AppRoutes() {
   const [user, setUser] = useState<UserType | null>(null);
-  const [wasLoggedIn, setWasLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
+  const wasLoggedIn = useRef(false);
 
   const navigate = useNavigate();
 
   // Check for existing session so a page refresh doesn't log the user out
-  // useEffect(() => {
-  //   api<UserType>('GET', '/user')
-  //     .then((u) => {
-  //       setUser(u);
-  //       setWasLoggedIn(true); // Not used yet
-  //     })
-  //     .catch(() => {
-  //       if (wasLoggedIn) {
-  //         // Session expired. Login page will show the banner
-  //         navigate('/login?expired=1');
-  //       }
-  //     })
-  //     .finally(() => setLoading(false));
-  // }, []); // [] means don't re-run this when state changes, only run once
-
   useEffect(() => {
-    setUser({ id: 1, name: 'Dev User', email: 'dev@example.com' });
-    setLoading(false);
-  }, []);
+    api<UserType>('GET', '/user')
+      .then((data) => {
+        setUser(data);
+        wasLoggedIn.current = true;
+      })
+      .catch(() => {
+        if (wasLoggedIn.current) {
+          // Session expired. Login page will show the banner
+          setUser(null);
+          navigate('/login?expired=1');
+        }
+      })
+      .finally(() => setLoading(false));
+  }, [navigate]);
+
+  // Spoof user for development
+  // useEffect(() => {
+  //   setUser({ id: 1, name: 'Dev User', email: 'dev@example.com' });
+  //   setLoading(false);
+  // }, []);
 
   if (loading) return null; // Waits until session check finishes
 

@@ -34,8 +34,15 @@ export async function api<T>(method: string, path: string, body?: unknown): Prom
 
   // Checks if response was successful (between 200-299)
   if (!response.ok) {
-    // Otherwise throw an error with the parsed JSON body
-    throw await response.json();
+    // Some error responses (e.g. 401) may not have a JSON body; .catch() returns {} so we always have an object
+    const body = await response.json().catch(() => ({}));
+    // Callers can inspect the status code to distinguish auth errors (401) from validation (422) from server errors (500+)
+    throw { status: response.status, ...body };
+  }
+
+  // Return early on empty responses
+  if (response.status === 204) {
+    return undefined as T;
   }
 
   return response.json() as Promise<T>;
