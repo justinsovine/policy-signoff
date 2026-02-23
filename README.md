@@ -59,6 +59,8 @@ A curl-based smoke test covers all 16 API endpoints including the full file uplo
 ./test-api.sh jane@example.com password
 ```
 
+A Postman collection is in [`postman/`](postman/) covering all endpoints with Sanctum cookie auth pre-wired. Import the collection, run "Auth / 1. CSRF Cookie" then "Auth / 2. Login", and the rest of the requests are ready to use. Requires cookie handling enabled for localhost in Postman settings.
+
 ## Docs
 
 - [`docs/api-spec.md`](docs/api-spec.md) — API routes, data model, response shapes, auth and file upload patterns

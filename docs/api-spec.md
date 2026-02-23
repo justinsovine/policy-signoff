@@ -121,10 +121,10 @@ All routes return JSON. All except register/login/logout require authentication 
     "total_users": 5,
     "signed_count": 3,
     "signoffs": [
-      { "user": "Alice Thompson", "signed_at": "2026-02-10T14:30:00Z" },
-      { "user": "Bob Martinez", "signed_at": "2026-02-11T09:15:00Z" },
-      { "user": "Charlie Kim", "signed_at": null, "overdue": true },
-      { "user": "Dana Williams", "signed_at": null, "overdue": false }
+      { "user": "Alice Thompson", "user_id": 1, "signed_at": "2026-02-10T14:30:00Z", "overdue": false },
+      { "user": "Bob Martinez", "user_id": 2, "signed_at": "2026-02-11T09:15:00Z", "overdue": false },
+      { "user": "Charlie Kim", "user_id": 3, "signed_at": null, "overdue": true },
+      { "user": "Dana Williams", "user_id": 4, "signed_at": null, "overdue": false }
     ]
   }
 }
