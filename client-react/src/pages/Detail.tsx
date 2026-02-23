@@ -1,5 +1,9 @@
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+
+import { api } from "@/api";
 import { BackLink,MainContainer, NavBar } from "@/components/Global";
-import { PolicyDetail as PolicyDetailType,User as UserType } from "@/types";
+import { PolicyDetail as PolicyDetailType, User as UserType } from "@/types";
 import { formatDate, getAvatarColor, getInitials, getStatusInfo } from "@/utils";
 
 interface DetailProps {
@@ -9,37 +13,32 @@ interface DetailProps {
 
 // Shows a policy's details and sign-off status.
 export function Detail({ user, onLogout }: DetailProps) {
-  // Replace with API response (PolicyDetail)
-  const policy: PolicyDetailType = {
-    id: 1,
-    title: "2026 Employee Handbook",
-    description: "All employees must review and acknowledge the updated 2026 Employee Handbook. Key changes include updated remote work guidelines, revised PTO policy, and new data security requirements.",
-    due_date: "2026-03-01",
-    created_by: "Jane Admin",
-    has_file: true,
-    file_name: "Employee_Handbook_2026.pdf",
-    signed: false,
-    overdue: true,
-    signoff_summary: {
-      total_users: 5,
-      signed_count: 3,
-      signoffs: [
-        { user: "Alice Thompson", signed_at: "2026-02-10", overdue: false },
-        { user: "Bob Martinez",   signed_at: "2026-02-11", overdue: false },
-        { user: "Charlie Kim",    signed_at: "2026-02-14", overdue: false },
-        { user: "Dana Williams",  signed_at: null,          overdue: true  },
-        { user: "You",            signed_at: null,          overdue: true  },
-      ],
-    },
-  };
+  const { id } = useParams<{ id: string }>(); // Get policy ID from URL
+  const [policyDetail, setPolicyDetail] = useState<PolicyDetailType>();
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  // Fetch policies data from API
+  useEffect(() => {
+    api<PolicyDetailType>('GET', `/api/policies/${id}`)
+      .then((data) => setPolicyDetail(data))
+      .catch((err) => {
+        if (err.status == 401) {
+          navigate('/login?expired=1');
+        }
+      })
+      .finally(() => setLoading(false));
+  }, [id, navigate]);
+
+  if (loading || !policyDetail) return null;     
 
   return (
     <>
       <NavBar user={user} onLogout={onLogout} />
       <MainContainer>
         <BackLink />
-        <PolicyHeader policy={policy} />
-        <SignoffSummary signoffSummary={policy.signoff_summary} />
+        <PolicyHeader policy={policyDetail} />
+        <SignoffSummary signoffSummary={policyDetail.signoff_summary} />
       </MainContainer>
     </>
   );
