@@ -2,8 +2,11 @@ import '@/index.css'
 
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import ReactGA from 'react-ga4'
 
 import App from '@/App'
+
+ReactGA.initialize('G-HWEJ5GYNDV')
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
