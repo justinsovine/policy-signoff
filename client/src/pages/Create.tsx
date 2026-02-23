@@ -1,15 +1,142 @@
-import { Link } from "react-router-dom";
+import { type ChangeEvent, SubmitEvent, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
-import { BackLink,MainContainer, NavBar } from "@/components/Global";
-import { User as UserType } from "@/types";
+import { api, ApiError } from "@/api";
+import { BackLink, MainContainer, NavBar } from "@/components/Global";
+import { Policy as PolicyType, User as UserType, ValidationErrors } from "@/types";
+
+// Maps file extensions to MIME types that the upload-url endpoint validates against
+const CONTENT_TYPES: Record<string, string> = {
+  pdf: 'application/pdf',
+  doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+};
+
+// Extracts the extension from a filename and looks up its MIME type
+function getContentType(filename: string): string | null {
+  const ext = filename.split('.').pop()?.toLowerCase() ?? '';
+  return CONTENT_TYPES[ext] ?? null;
+}
+
+// Converts raw byte count to a human-readable string (e.g. 2.4 MB)
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 interface CreateProps {
   user: UserType | null;
   onLogout: () => void;
 }
 
-// Form for creating a new policy.
+// Handles creating a new policy with a required file attachment.
+// Two-step submit: POST the policy metadata to the API, then upload the file to S3 via presigned URL.
 export function Create({ user, onLogout }: CreateProps) {
+  const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null); // ref to the hidden file input so we can reset it on "Remove"
+
+  // Controlled form fields
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [dueDate, setDueDate] = useState('');
+  const [file, setFile] = useState<File | null>(null); // the browser File object from the native picker
+
+  const [submitting, setSubmitting] = useState(false);
+  const [errors, setErrors] = useState<ValidationErrors>({}); // keyed by field name, matches Laravel's 422 shape
+  const [createdPolicyId, setCreatedPolicyId] = useState<number | null>(null); // tracks step 1 so retries skip straight to upload
+  const [uploadError, setUploadError] = useState(false);
+
+  // Validates the selected file client-side before accepting it
+  function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
+    const selected = e.target.files?.[0] ?? null; // only care about the first file
+    if (!selected) return;
+
+    const contentType = getContentType(selected.name);
+    if (!contentType) {
+      setErrors((prev) => ({ ...prev, file: ['File must be a PDF, DOC, or DOCX.'] }));
+      return;
+    }
+    if (selected.size > 10 * 1024 * 1024) {
+      setErrors((prev) => ({ ...prev, file: ['File must be under 10 MB.'] }));
+      return;
+    }
+
+    setFile(selected);
+    setErrors((prev) => Object.fromEntries(
+      Object.entries(prev).filter(([key]) => key !== 'file') // clear the file error now that one is selected
+    ));
+  }
+
+  // Clears both the React state and the native input (so re-selecting the same file triggers onChange)
+  function handleRemoveFile() {
+    setFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
+
+  // Handles the two-step create flow: save the policy, then upload the file to S3.
+  // If step 2 fails, we stay on this page so the user can retry the upload.
+  // createdPolicyId tracks whether step 1 already succeeded so retries skip straight to upload.
+  async function handleSubmit(e: SubmitEvent) {
+    e.preventDefault();
+    setErrors({});
+    setUploadError(false);
+
+    if (!file) {
+      setErrors({ file: ['Please attach a file.'] });
+      return;
+    }
+
+    setSubmitting(true);
+
+    // Step 1: create the policy record (skip if we already created it on a previous attempt)
+    let policyId = createdPolicyId;
+    if (!policyId) {
+      try {
+        const policy = await api<PolicyType>('POST', '/api/policies', {
+          title,
+          description,
+          due_date: dueDate,
+        });
+        policyId = policy.id;
+        setCreatedPolicyId(policyId); // remember so we don't create a duplicate on retry
+      } catch (err: unknown) {
+        const e = err as ApiError;
+        if (e.status === 401) { navigate('/login?expired=1'); return; }
+        if (e.status === 422 && 'errors' in e) {
+          setErrors(e.errors as ValidationErrors); // Laravel sends field-keyed error arrays
+        }
+        setSubmitting(false);
+        return;
+      }
+    }
+
+    // Step 2: get a presigned URL from the API and PUT the file directly to MinIO
+    try {
+      const contentType = getContentType(file.name)!; // safe because we validated above
+      const { upload_url } = await api<{ upload_url: string; key: string }>(
+        'POST', `/api/policies/${policyId}/upload-url`, {
+          filename: file.name,
+          content_type: contentType,
+        }
+      );
+
+      // raw fetch to MinIO - no session cookies or XSRF token, just the file body
+      await fetch(upload_url, {
+        method: 'PUT',
+        headers: { 'Content-Type': contentType },
+        body: file,
+      });
+    } catch {
+      // upload failed - stay on this page so the user can retry
+      setUploadError(true);
+      setSubmitting(false);
+      return;
+    }
+
+    navigate(`/policies/${policyId}`);
+  }
+
   return (
     <>
       <NavBar user={user} onLogout={onLogout} />
@@ -23,7 +150,18 @@ export function Create({ user, onLogout }: CreateProps) {
           Create a new policy for your organization. All users will be able to view and sign off on it.
         </p>
 
-        <form className="space-y-6">
+        {uploadError && (
+          <div className="border border-red-200 bg-red-50 rounded-lg p-3 mb-6">
+            <p className="text-sm text-red-800">
+              File upload failed. Your policy was saved but the attachment didn't go through. Please try again.
+            </p>
+          </div>
+        )}
+
+        <form
+          className="space-y-6"
+          onSubmit={handleSubmit}
+        >
 
           {/* Title */}
           <div>
@@ -36,12 +174,17 @@ export function Create({ user, onLogout }: CreateProps) {
             <input
               id="title"
               type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              disabled={!!createdPolicyId} // lock after policy is created so retries only affect the upload
               placeholder="e.g. 2026 Employee Handbook"
-              className="w-full h-10 px-3 text-sm border border-red-300 ring-1 ring-red-300 rounded-lg bg-white placeholder:text-zinc-400 transition-shadow"
+              className={`w-full h-10 px-3 text-sm border rounded-lg bg-white placeholder:text-zinc-400 transition-shadow disabled:bg-zinc-50 disabled:text-zinc-500 ${errors.title ? 'border-red-300 ring-1 ring-red-300' : 'border-zinc-200'}`}
             />
-            <p className="mt-1.5 text-sm text-red-600">
-              The title field is required.
-            </p>
+            {errors.title && (
+              <p className="mt-1.5 text-sm text-red-600">
+                {errors.title[0]}
+              </p>
+            )}
           </div>
 
           {/* Description */}
@@ -55,12 +198,21 @@ export function Create({ user, onLogout }: CreateProps) {
             <textarea
               id="description"
               rows={6}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              disabled={!!createdPolicyId}
               placeholder="Describe the policy and what employees need to know..."
-              className="w-full px-3 py-2.5 text-sm border border-zinc-200 rounded-lg bg-white placeholder:text-zinc-400 transition-shadow resize-y"
+              className={`w-full px-3 py-2.5 text-sm border rounded-lg bg-white placeholder:text-zinc-400 transition-shadow resize-y disabled:bg-zinc-50 disabled:text-zinc-500 ${errors.description ? 'border-red-300 ring-1 ring-red-300' : 'border-zinc-200'}`}
             ></textarea>
-            <p className="mt-1.5 text-xs text-zinc-400">
-              Provide details about the policy content, key changes, and what acknowledgment means.
-            </p>
+            {errors.description ? (
+              <p className="mt-1.5 text-sm text-red-600">
+                {errors.description[0]}
+              </p>
+            ) : (
+              <p className="mt-1.5 text-xs text-zinc-400">
+                Provide details about the policy content, key changes, and what acknowledgment means.
+              </p>
+            )}
           </div>
 
           {/* Due Date */}
@@ -74,38 +226,84 @@ export function Create({ user, onLogout }: CreateProps) {
             <input
               id="due_date"
               type="date"
-              className="w-full sm:w-64 h-10 px-3 text-sm border border-zinc-200 rounded-lg bg-white text-zinc-700 transition-shadow"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              disabled={!!createdPolicyId}
+              className={`w-full sm:w-64 h-10 px-3 text-sm border rounded-lg bg-white text-zinc-700 transition-shadow disabled:bg-zinc-50 disabled:text-zinc-500 ${errors.due_date ? 'border-red-300 ring-1 ring-red-300' : 'border-zinc-200'}`}
             />
-            <p className="mt-1.5 text-xs text-zinc-400">
-              Deadline for all users to sign off on this policy.
-            </p>
+            {errors.due_date ? (
+              <p className="mt-1.5 text-sm text-red-600">
+                {errors.due_date[0]}
+              </p>
+            ) : (
+              <p className="mt-1.5 text-xs text-zinc-400">
+                Deadline for all users to sign off on this policy.
+              </p>
+            )}
           </div>
 
-          {/* File Upload Drop Zone */}
+          {/* File Attachment */}
           <div>
             <label className="block text-sm font-medium text-zinc-700 mb-1.5">
-              Attachment <span className="font-normal text-zinc-400">(optional)</span>
+              Attachment
             </label>
-            <div className="border-2 border-dashed border-zinc-200 rounded-lg p-8 text-center hover:border-zinc-300 transition-colors">
-              <div className="mx-auto w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center mb-3">
-                <span className="text-zinc-400 text-lg">
-                  &uarr;
-                </span>
+
+            {file ? (
+              /* File selected */
+              <div className={`border rounded-lg p-4 flex items-center gap-4 ${errors.file ? 'border-red-300' : 'border-zinc-200'}`}>
+                <div className="w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center shrink-0">
+                  <span className="text-xs font-bold text-zinc-500 uppercase tracking-wide">
+                    {file.name.split('.').pop()}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-zinc-900 truncate">
+                    {file.name}
+                  </p>
+                  <p className="text-xs text-zinc-400">
+                    {formatFileSize(file.size)}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRemoveFile}
+                  className="text-sm text-zinc-500 hover:text-red-600 transition-colors shrink-0 cursor-pointer"
+                >
+                  Remove
+                </button>
               </div>
-              <p className="text-sm text-zinc-600 mb-1">
-                Drop your file here, or
+            ) : (
+              /* Empty state */
+              <div className={`border-2 border-dashed rounded-lg p-8 text-center hover:border-zinc-300 transition-colors ${errors.file ? 'border-red-300' : 'border-zinc-200'}`}>
+                <div className="mx-auto w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center mb-3">
+                  <span className="text-zinc-400 text-lg">
+                    &uarr;
+                  </span>
+                </div>
+                <p className="text-sm text-zinc-600 mb-1">
+                  Drop your file here, or
+                </p>
+                <label className="inline-flex items-center gap-1.5 h-8 px-3 text-sm font-medium text-zinc-700 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors cursor-pointer">
+                  Select file
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    onChange={handleFileChange}
+                    className="sr-only"
+                  />
+                </label>
+                <p className="mt-3 text-xs text-zinc-400">
+                  PDF, DOC, or DOCX up to 10 MB
+                </p>
+              </div>
+            )}
+
+            {errors.file && (
+              <p className="mt-1.5 text-sm text-red-600">
+                {errors.file[0]}
               </p>
-              <label className="inline-flex items-center gap-1.5 h-8 px-3 text-sm font-medium text-zinc-700 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors cursor-pointer">
-                Select file
-                <input
-                  type="file"
-                  className="sr-only"
-                />
-              </label>
-              <p className="mt-3 text-xs text-zinc-400">
-                PDF, DOC, or DOCX up to 10 MB
-              </p>
-            </div>
+            )}
           </div>
 
           {/* Divider */}
@@ -119,9 +317,10 @@ export function Create({ user, onLogout }: CreateProps) {
               </Link>
               <button
                 type="submit"
-                className="inline-flex items-center justify-center h-10 px-5 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-zinc-800 transition-colors"
+                disabled={submitting}
+                className="inline-flex items-center justify-center h-10 px-5 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Create Policy
+                {submitting ? 'Creating...' : createdPolicyId ? 'Retry Upload' : 'Create Policy'}
               </button>
             </div>
           </div>
