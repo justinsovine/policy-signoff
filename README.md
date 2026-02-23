@@ -9,7 +9,7 @@ A policy sign-off tracker for HR and compliance teams. Users create policies wit
 ## What it does
 
 - Create policies with a title, description, due date, and optional PDF/Word attachment
-- All users sign off on every policy — no assignment or invitation step
+- All users sign off on every policy - no assignment or invitation step
 - Dashboard shows each policy's status: signed, pending, or overdue
 - Policy detail shows a full sign-off summary: who signed, when, and who's still outstanding
 - Files are stored in S3-compatible object storage (MinIO); uploads go directly from the browser to the object store via presigned URLs
@@ -45,21 +45,19 @@ docker compose exec minio mc mb local/policysignoff
 | API | http://localhost:8000 |
 | MinIO console | http://localhost:9001 (minioadmin / minioadmin) |
 
-Default seed credentials: `jane@example.com` / `password` (and `alice@example.com`, `bob@example.com`, etc.)
-
-See each client's README for client-specific dev setup. See [`docs/client-guide.md`](docs/client-guide.md) for a full build guide covering all three frontends.
+Default seed credentials: `jane@example.com` / `password` (and `alice@example.com`, `bob@example.com`, etc.
 
 ## Testing the API
 
-A curl-based smoke test covers all 16 API endpoints including the full file upload/download roundtrip:
+A Postman collection is in [`postman/`](postman/) covering all endpoints with Sanctum cookie auth pre-wired. Import the collection, run "Auth / 1. CSRF Cookie" then "Auth / 2. Login", and the rest of the requests are ready to use. Requires cookie handling enabled for localhost in Postman settings.
+
+A curl-based smoke test also covers all 16 API endpoints including the full file upload/download roundtrip:
 
 ```bash
 ./test-api.sh
 # or as a specific user:
 ./test-api.sh jane@example.com password
 ```
-
-A Postman collection is in [`postman/`](postman/) covering all endpoints with Sanctum cookie auth pre-wired. Import the collection, run "Auth / 1. CSRF Cookie" then "Auth / 2. Login", and the rest of the requests are ready to use. Requires cookie handling enabled for localhost in Postman settings.
 
 ## Deployment
 
@@ -73,7 +71,7 @@ The script pulls the latest code, rebuilds the client image with the production 
 
 ## Docs
 
-- [`docs/api-spec.md`](docs/api-spec.md) — API routes, data model, response shapes, auth and file upload patterns
-- [`docs/client-guide.md`](docs/client-guide.md) — Step-by-step frontend build guide for all three clients
-- [`docs/mockups/`](docs/mockups/) — Static HTML+Tailwind mockups with all UI states
-- [`deploy/SETUP.md`](deploy/SETUP.md) — One-time VPS setup instructions
+- [`docs/api-spec.md`](docs/api-spec.md) - API routes, data model, response shapes, auth and file upload patterns
+- [`docs/mockups/`](docs/mockups/) - Static HTML+Tailwind mockups with all UI states
+- [`docs/roadmap.md`](docs/roadmap.md) - Ideas for continuing to grow the project
+- [`deploy/SETUP.md`](deploy/SETUP.md) - One-time VPS setup instructions

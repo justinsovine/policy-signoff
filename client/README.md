@@ -1,4 +1,4 @@
-# PolicySignoff — React Client
+# PolicySignoff - React Client
 
 React + Vite + React Router frontend for the PolicySignoff API. Runs at [policysignoff.justinsovine.com](https://policysignoff.justinsovine.com) in production.
 
@@ -7,7 +7,6 @@ React + Vite + React Router frontend for the PolicySignoff API. Runs at [policys
 - **React 19** + **Vite 7**
 - **React Router** for client-side routing
 - **Tailwind CSS v4** for styling
-- **Newsreader** (display) + **Plus Jakarta Sans** (body) from Google Fonts
 
 ## Dev setup
 
@@ -43,17 +42,17 @@ npm run preview    # preview the production build locally
 
 ```
 src/
-  api.js          — getCookie() + api() fetch wrapper (Sanctum cookie auth)
-  main.jsx        — entry point, React Router setup
-  App.jsx         — auth state, protected routes
+  api.js          - getCookie() + api() fetch wrapper (Sanctum cookie auth)
+  main.jsx        - entry point, React Router setup
+  App.jsx         - auth state, protected routes
   pages/
-    Login.jsx     — login + register forms, session-expired banner
-    Dashboard.jsx — policy list with status badges
-    Policy.jsx    — policy detail, sign-off button, sign-off summary
-    Create.jsx    — create policy form with file upload
+    Login.jsx     - login + register forms, session-expired banner
+    Dashboard.jsx - policy list with status badges
+    Policy.jsx    - policy detail, sign-off button, sign-off summary
+    Create.jsx    - create policy form with file upload
   components/
-    StatusBadge.jsx   — signed / pending / overdue pill
-    SignoffList.jsx   — per-user sign-off status table
+    StatusBadge.jsx   - signed / pending / overdue pill
+    SignoffList.jsx   - per-user sign-off status table
 ```
 
 ## API integration
@@ -77,4 +76,4 @@ const { upload_url } = await api('POST', `/api/policies/${id}/upload-url`, {
 await fetch(upload_url, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file })
 ```
 
-Auth is cookie-based via Laravel Sanctum — no tokens or localStorage. The `api()` helper handles CSRF automatically by reading the `XSRF-TOKEN` cookie.
+Auth is cookie-based via Laravel Sanctum - no tokens or localStorage. The `api()` helper handles CSRF automatically by reading the `XSRF-TOKEN` cookie.

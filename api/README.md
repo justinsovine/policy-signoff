@@ -6,9 +6,9 @@ Laravel 12 REST API with Sanctum cookie-based SPA authentication and MinIO/S3 fi
 
 - **PHP 8.4** / **Laravel 12**
 - **MySQL 8** via Docker
-- **Laravel Sanctum** — cookie-based session auth (no tokens)
-- **MinIO** — S3-compatible object storage for policy documents
-- **Presigned URLs** — file uploads go directly from browser to MinIO, never through Laravel
+- **Laravel Sanctum** - cookie-based session auth (no tokens)
+- **MinIO** - S3-compatible object storage for policy documents
+- **Presigned URLs** - file uploads go directly from browser to MinIO, never through Laravel
 
 ## Setup
 
@@ -28,7 +28,7 @@ docker compose exec minio mc mb local/policysignoff
 
 API is available at **http://localhost:8000**.
 
-Copy `.env.example` to `.env` if starting fresh — the example is pre-configured for the Docker Compose environment.
+Copy `.env.example` to `.env` if starting fresh - the example is pre-configured for the Docker Compose environment.
 
 ## Commands
 
@@ -71,17 +71,17 @@ Full request/response documentation: [`../docs/api-spec.md`](../docs/api-spec.md
 
 All API clients follow the same pattern:
 
-1. `GET /sanctum/csrf-cookie` — sets the `XSRF-TOKEN` cookie
-2. `POST /login` with `X-XSRF-TOKEN` header — sets the session cookie
+1. `GET /sanctum/csrf-cookie` - sets the `XSRF-TOKEN` cookie
+2. `POST /login` with `X-XSRF-TOKEN` header - sets the session cookie
 3. All subsequent requests include both cookies (`credentials: 'include'`)
 
-Requests must come from a domain listed in `SANCTUM_STATEFUL_DOMAINS` and include a matching `Origin` or `Referer` header — this is how Sanctum identifies stateful (cookie-based) requests.
+Requests must come from a domain listed in `SANCTUM_STATEFUL_DOMAINS` and include a matching `Origin` or `Referer` header - this is how Sanctum identifies stateful (cookie-based) requests.
 
 ## File upload flow
 
 1. Client calls `POST /api/policies/{id}/upload-url` with `filename` and `content_type`
 2. API generates a presigned S3 `PutObject` URL (15-minute expiry) and updates the policy record with the file metadata
-3. Client PUTs the file directly to MinIO using the presigned URL — no Laravel involvement
+3. Client PUTs the file directly to MinIO using the presigned URL - no Laravel involvement
 4. Client calls `GET /api/policies/{id}/download-url` to get a presigned `GetObject` URL for viewing
 
 Presigned URLs are signed against `AWS_URL` (the external MinIO hostname) so signatures remain valid when the browser uses them. `AWS_ENDPOINT` (the internal Docker hostname) is used only for server-side Laravel→MinIO communication.
@@ -90,16 +90,16 @@ Presigned URLs are signed against `AWS_URL` (the external MinIO hostname) so sig
 
 ```
 app/Http/Controllers/
-  AuthController.php      — register, login, logout, user
-  PolicyController.php    — index, store, show
-  SignoffController.php   — store (with 409 on duplicate)
-  FileController.php      — uploadUrl, downloadUrl
+  AuthController.php      - register, login, logout, user
+  PolicyController.php    - index, store, show
+  SignoffController.php   - store (with 409 on duplicate)
+  FileController.php      - uploadUrl, downloadUrl
 
 database/
-  migrations/             — users, policies, signoffs
-  seeders/DatabaseSeeder.php  — 6 users, 4 policies, realistic sign-offs
+  migrations/             - users, policies, signoffs
+  seeders/DatabaseSeeder.php  - 6 users, 4 policies, realistic sign-offs
 
 config/
-  cors.php                — allowed origins, auth route paths
-  sanctum.php             — stateful domains from SANCTUM_STATEFUL_DOMAINS env
+  cors.php                - allowed origins, auth route paths
+  sanctum.php             - stateful domains from SANCTUM_STATEFUL_DOMAINS env
 ```
