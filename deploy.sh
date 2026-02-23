@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENV_FILE="$PROJECT_DIR/.env.production"
 COMPOSE="docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file $ENV_FILE"
 
@@ -20,6 +19,9 @@ git pull origin main
 
 echo "==> Stopping containers..."
 $COMPOSE down
+
+echo "==> Building api..."
+$COMPOSE build api
 
 echo "==> Building client (no cache)..."
 $COMPOSE build --no-cache client

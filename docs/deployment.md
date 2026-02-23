@@ -1,4 +1,4 @@
-# VPS Setup — One-Time Steps
+# VPS Setup - One-Time Steps
 
 These steps assume a Linode VPS with NGINX and certbot already installed (same host that runs ohiocrashleads.com).
 
@@ -6,8 +6,8 @@ These steps assume a Linode VPS with NGINX and certbot already installed (same h
 
 ```bash
 cd /var/www
-git clone git@github.com:justinsovine/policysignoff.git
-cd policysignoff
+git clone git@github.com:justinsovine/policy-signoff.git
+cd policy-signoff
 ```
 
 ## 2. Create production env file
@@ -26,7 +26,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.
 ## 3. Set up host NGINX
 
 ```bash
-sudo cp deploy/nginx-site.conf /etc/nginx/sites-available/policysignoff.justinsovine.com
+sudo cp nginx-site.conf /etc/nginx/sites-available/policysignoff.justinsovine.com
 sudo ln -s /etc/nginx/sites-available/policysignoff.justinsovine.com /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
@@ -43,8 +43,8 @@ Certbot will modify the NGINX config to add SSL blocks and redirects.
 ## 5. First deploy
 
 ```bash
-chmod +x deploy/deploy.sh
-./deploy/deploy.sh
+chmod +x deploy.sh
+./deploy.sh
 ```
 
 ## 6. Create MinIO bucket
