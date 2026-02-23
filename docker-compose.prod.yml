@@ -13,7 +13,7 @@ services:
         condition: service_healthy
     environment:
       - APP_ENV=production
-      - APP_URL=https://api.policysignoff.justinsovine.com
+      - APP_URL=https://policysignoff-api.justinsovine.com
       - APP_KEY=${APP_KEY}
       - DB_CONNECTION=mysql
       - DB_HOST=mysql
@@ -29,7 +29,7 @@ services:
       - AWS_DEFAULT_REGION=us-east-1
       - AWS_BUCKET=policysignoff
       - AWS_ENDPOINT=http://minio:9000
-      - AWS_URL=https://minio.policysignoff.justinsovine.com
+      - AWS_URL=https://policysignoff-minio.justinsovine.com
       - AWS_USE_PATH_STYLE_ENDPOINT=true
     networks:
       - policysignoff
@@ -39,7 +39,7 @@ services:
       context: ./client
       dockerfile: Dockerfile.prod
       args:
-        VITE_API_URL: https://api.policysignoff.justinsovine.com
+        VITE_API_URL: https://policysignoff-api.justinsovine.com
     ports:
       - "3001:80"
     networks:
