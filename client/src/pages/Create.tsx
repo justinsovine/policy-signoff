@@ -44,6 +44,8 @@ export function Create({ user, onLogout }: CreateProps) {
 
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({}); // keyed by field name, matches Laravel's 422 shape
+  const [createdPolicyId, setCreatedPolicyId] = useState<number | null>(null); // tracks step 1 so retries skip straight to upload
+  const [uploadError, setUploadError] = useState(false);
 
   // Validates the selected file client-side before accepting it
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
@@ -72,10 +74,13 @@ export function Create({ user, onLogout }: CreateProps) {
     if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
-  // Handles the two-step create flow: save the policy, then upload the file to S3
+  // Handles the two-step create flow: save the policy, then upload the file to S3.
+  // If step 2 fails, we stay on this page so the user can retry the upload.
+  // createdPolicyId tracks whether step 1 already succeeded so retries skip straight to upload.
   async function handleSubmit(e: SubmitEvent) {
     e.preventDefault();
     setErrors({});
+    setUploadError(false);
 
     if (!file) {
       setErrors({ file: ['Please attach a file.'] });
@@ -84,27 +89,29 @@ export function Create({ user, onLogout }: CreateProps) {
 
     setSubmitting(true);
 
-    // Step 1: create the policy record in the database
-    let policyId: number;
-    try {
-      const policy = await api<PolicyType>('POST', '/api/policies', {
-        title,
-        description,
-        due_date: dueDate,
-      });
-      policyId = policy.id;
-    } catch (err: unknown) {
-      const e = err as ApiError;
-      if (e.status === 401) { navigate('/login?expired=1'); return; }
-      if (e.status === 422 && 'errors' in e) {
-        setErrors(e.errors as ValidationErrors); // Laravel sends field-keyed error arrays
+    // Step 1: create the policy record (skip if we already created it on a previous attempt)
+    let policyId = createdPolicyId;
+    if (!policyId) {
+      try {
+        const policy = await api<PolicyType>('POST', '/api/policies', {
+          title,
+          description,
+          due_date: dueDate,
+        });
+        policyId = policy.id;
+        setCreatedPolicyId(policyId); // remember so we don't create a duplicate on retry
+      } catch (err: unknown) {
+        const e = err as ApiError;
+        if (e.status === 401) { navigate('/login?expired=1'); return; }
+        if (e.status === 422 && 'errors' in e) {
+          setErrors(e.errors as ValidationErrors); // Laravel sends field-keyed error arrays
+        }
+        setSubmitting(false);
+        return;
       }
-      setSubmitting(false);
-      return;
     }
 
-    // Step 2: get a presigned URL from the API and PUT the file directly to MinIO.
-    // If this fails the policy still exists without a file - we navigate anyway.
+    // Step 2: get a presigned URL from the API and PUT the file directly to MinIO
     try {
       const contentType = getContentType(file.name)!; // safe because we validated above
       const { upload_url } = await api<{ upload_url: string; key: string }>(
@@ -121,7 +128,10 @@ export function Create({ user, onLogout }: CreateProps) {
         body: file,
       });
     } catch {
-      // upload failed but the policy was created - still navigate to the detail page
+      // upload failed - stay on this page so the user can retry
+      setUploadError(true);
+      setSubmitting(false);
+      return;
     }
 
     navigate(`/policies/${policyId}`);
@@ -139,6 +149,14 @@ export function Create({ user, onLogout }: CreateProps) {
         <p className="text-sm text-zinc-500 mb-8">
           Create a new policy for your organization. All users will be able to view and sign off on it.
         </p>
+
+        {uploadError && (
+          <div className="border border-red-200 bg-red-50 rounded-lg p-3 mb-6">
+            <p className="text-sm text-red-800">
+              File upload failed. Your policy was saved but the attachment didn't go through. Please try again.
+            </p>
+          </div>
+        )}
 
         <form
           className="space-y-6"
@@ -158,8 +176,9 @@ export function Create({ user, onLogout }: CreateProps) {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              disabled={!!createdPolicyId} // lock after policy is created so retries only affect the upload
               placeholder="e.g. 2026 Employee Handbook"
-              className={`w-full h-10 px-3 text-sm border rounded-lg bg-white placeholder:text-zinc-400 transition-shadow ${errors.title ? 'border-red-300 ring-1 ring-red-300' : 'border-zinc-200'}`}
+              className={`w-full h-10 px-3 text-sm border rounded-lg bg-white placeholder:text-zinc-400 transition-shadow disabled:bg-zinc-50 disabled:text-zinc-500 ${errors.title ? 'border-red-300 ring-1 ring-red-300' : 'border-zinc-200'}`}
             />
             {errors.title && (
               <p className="mt-1.5 text-sm text-red-600">
@@ -181,8 +200,9 @@ export function Create({ user, onLogout }: CreateProps) {
               rows={6}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              disabled={!!createdPolicyId}
               placeholder="Describe the policy and what employees need to know..."
-              className={`w-full px-3 py-2.5 text-sm border rounded-lg bg-white placeholder:text-zinc-400 transition-shadow resize-y ${errors.description ? 'border-red-300 ring-1 ring-red-300' : 'border-zinc-200'}`}
+              className={`w-full px-3 py-2.5 text-sm border rounded-lg bg-white placeholder:text-zinc-400 transition-shadow resize-y disabled:bg-zinc-50 disabled:text-zinc-500 ${errors.description ? 'border-red-300 ring-1 ring-red-300' : 'border-zinc-200'}`}
             ></textarea>
             {errors.description ? (
               <p className="mt-1.5 text-sm text-red-600">
@@ -208,7 +228,8 @@ export function Create({ user, onLogout }: CreateProps) {
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              className={`w-full sm:w-64 h-10 px-3 text-sm border rounded-lg bg-white text-zinc-700 transition-shadow ${errors.due_date ? 'border-red-300 ring-1 ring-red-300' : 'border-zinc-200'}`}
+              disabled={!!createdPolicyId}
+              className={`w-full sm:w-64 h-10 px-3 text-sm border rounded-lg bg-white text-zinc-700 transition-shadow disabled:bg-zinc-50 disabled:text-zinc-500 ${errors.due_date ? 'border-red-300 ring-1 ring-red-300' : 'border-zinc-200'}`}
             />
             {errors.due_date ? (
               <p className="mt-1.5 text-sm text-red-600">
@@ -299,7 +320,7 @@ export function Create({ user, onLogout }: CreateProps) {
                 disabled={submitting}
                 className="inline-flex items-center justify-center h-10 px-5 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {submitting ? 'Creating...' : 'Create Policy'}
+                {submitting ? 'Creating...' : createdPolicyId ? 'Retry Upload' : 'Create Policy'}
               </button>
             </div>
           </div>
