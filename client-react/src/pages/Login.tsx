@@ -15,16 +15,24 @@ export function Login({ user, setUser }: LoginProps) {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row overflow-hidden">
       <BrandPanel />
-      {mode === 'login' ? <LoginForm setMode={setMode} expiredSession={expiredSession} /> : <RegisterForm setMode={setMode} /> }      
+      {mode === 'login'
+        ? (
+          <LoginForm
+            setMode={setMode}
+            expiredSession={expiredSession}
+          />
+        )
+        : <RegisterForm setMode={setMode} />
+      }
     </div>
   );
 }
 
 function BrandPanel() {
-  const quotes: QuoteType[]  = [                                                                                                                  
+  const quotes: QuoteType[]  = [
     {
-      quote: "Compliance isn't paperwork. It's the foundation of organizational trust.",                                             
-      initials: "JA",                                            
+      quote: "Compliance isn't paperwork. It's the foundation of organizational trust.",
+      initials: "JA",
       name: "Jane Admin",
       title: "Head of Compliance",
     },
@@ -61,7 +69,9 @@ function BrandPanel() {
       <div className="relative z-10">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center">
-            <span className="text-sm font-bold tracking-tight">PS</span>
+            <span className="text-sm font-bold tracking-tight">
+              PS
+            </span>
           </div>
           <span className="font-serif text-xl font-medium tracking-tight">
             PolicySignoff
@@ -109,7 +119,9 @@ function LoginForm({
         {/* Mobile brand mark */}
         <div className="lg:hidden mb-10 flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg bg-zinc-900 flex items-center justify-center">
-            <span className="text-sm font-bold tracking-tight text-white">PS</span>
+            <span className="text-sm font-bold tracking-tight text-white">
+              PS
+            </span>
           </div>
           <span className="font-serif text-xl font-medium tracking-tight">
             PolicySignoff
@@ -127,7 +139,10 @@ function LoginForm({
 
         <form className="mt-8 space-y-5">
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1.5" htmlFor="email">
+            <label
+              className="block text-sm font-medium text-zinc-700 mb-1.5"
+              htmlFor="email"
+            >
               Email address
             </label>
             <input
@@ -137,13 +152,19 @@ function LoginForm({
               className={`w-full h-10 px-3 text-sm border rounded-lg bg-white placeholder:text-zinc-400 transition-shadow ${errors.form ? 'border-red-300 ring-1 ring-red-300' : 'border-zinc-200'}`}
               required
             />
-            {errors.form && <p className="mt-1.5 text-sm text-red-600">{errors.form}</p>}
+            {errors.form && (
+              <p className="mt-1.5 text-sm text-red-600">
+                {errors.form}
+              </p>
+            )}
           </div>
-          
 
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-sm font-medium text-zinc-700" htmlFor="password">
+              <label
+                className="text-sm font-medium text-zinc-700"
+                htmlFor="password"
+              >
                 Password
               </label>
             </div>
@@ -166,10 +187,10 @@ function LoginForm({
 
         <p className="mt-6 text-center text-sm text-zinc-500">
           Don't have an account?
-          <button 
+          <button
             onClick={() => {
               setMode("register");
-            }} 
+            }}
             className="font-medium text-zinc-900 hover:underline ml-1 cursor-pointer"
           >
             Create one
@@ -198,7 +219,9 @@ function RegisterForm({
         {/* Mobile brand mark */}
         <div className="lg:hidden mb-10 flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg bg-zinc-900 flex items-center justify-center">
-            <span className="text-sm font-bold tracking-tight text-white">PS</span>
+            <span className="text-sm font-bold tracking-tight text-white">
+              PS
+            </span>
           </div>
           <span className="font-serif text-xl font-medium tracking-tight">
             PolicySignoff
@@ -214,7 +237,10 @@ function RegisterForm({
 
         <form className="mt-8 space-y-5">
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1.5" htmlFor="name">
+            <label
+              className="block text-sm font-medium text-zinc-700 mb-1.5"
+              htmlFor="name"
+            >
               Full name
             </label>
             <input
@@ -227,7 +253,10 @@ function RegisterForm({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1.5" htmlFor="email">
+            <label
+              className="block text-sm font-medium text-zinc-700 mb-1.5"
+              htmlFor="email"
+            >
               Email address
             </label>
             <input
@@ -237,11 +266,20 @@ function RegisterForm({
               className={`w-full h-10 px-3 text-sm border rounded-lg bg-white placeholder:text-zinc-400 transition-shadow ${errors.email ? 'border-red-300 ring-1 ring-red-300' : 'border-zinc-200'}`}
               required
             />
-            {errors.email && <p className="mt-1.5 text-sm text-red-600">{errors.email}</p>}
+            {errors.email && (
+              <p className="mt-1.5 text-sm text-red-600">
+                {errors.email}
+              </p>
+            )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1.5" htmlFor="password">Password</label>
+            <label
+              className="block text-sm font-medium text-zinc-700 mb-1.5"
+              htmlFor="password"
+            >
+              Password
+            </label>
             <input
               id="password"
               type="password"
@@ -249,11 +287,20 @@ function RegisterForm({
               className={`w-full h-10 px-3 text-sm border rounded-lg bg-white placeholder:text-zinc-400 transition-shadow ${errors.password ? 'border-red-300 ring-1 ring-red-300' : 'border-zinc-200'}`}
               required
             />
-            {errors.password && <p className="mt-1.5 text-sm text-red-600">{errors.password}</p>}
+            {errors.password && (
+              <p className="mt-1.5 text-sm text-red-600">
+                {errors.password}
+              </p>
+            )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1.5" htmlFor="password_confirmation">Confirm password</label>
+            <label
+              className="block text-sm font-medium text-zinc-700 mb-1.5"
+              htmlFor="password_confirmation"
+            >
+              Confirm password
+            </label>
             <input
               id="password_confirmation"
               type="password"
@@ -276,7 +323,7 @@ function RegisterForm({
           <button
             onClick={() => {
               setMode("login");
-            }} 
+            }}
             className="font-medium text-zinc-900 hover:underline ml-1 cursor-pointer"
           >
             Sign in

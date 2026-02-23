@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 // ...
 export function MainContainer({
   children,
@@ -37,7 +39,7 @@ export function NavBar() {
           </div>
           <button
             onClick={() => {
-              
+
             }}
             className="text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
           >
@@ -53,11 +55,16 @@ export function NavBar() {
 export function BackLink() {
   return(
     <>
-      {/* <!-- Back link --> */}
-      <a href="dashboard.html" className="inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors mb-6">
-        <span className="text-lg leading-none">&larr;</span>
+      {/* Back link */}
+      <Link
+        to="/"
+        className="inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 transition-colors mb-6"
+      >
+        <span className="text-lg leading-none">
+          &larr;
+        </span>
         Back to policies
-      </a>
+      </Link>
     </>
   );
 }

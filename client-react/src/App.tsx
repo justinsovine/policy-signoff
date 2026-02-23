@@ -21,7 +21,7 @@ function RequireAuth({ user, children }: RequireAuthProps) {
   return <>{children}</>;
 }
 
-function App() {  
+function App() {
   return (
     <BrowserRouter>
       <AppRoutes />
@@ -35,9 +35,9 @@ function AppRoutes() {
   const [wasLoggedIn, setWasLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const navigate = useNavigate(); // 
+  const navigate = useNavigate();
 
-  // Check for existing session so a page refresh doesn't log the user out 
+  // Check for existing session so a page refresh doesn't log the user out
   // useEffect(() => {
   //   api<UserType>('GET', '/user')
   //     .then((u) => {
@@ -53,9 +53,9 @@ function AppRoutes() {
   //     .finally(() => setLoading(false));
   // }, []); // [] means don't re-run this when state changes, only run once
 
-  useEffect(() => {                                                                                                                 
-    setUser({ id: 1, name: 'Dev User', email: 'dev@example.com' });                                                                 
-    setLoading(false);                                                                                                              
+  useEffect(() => {
+    setUser({ id: 1, name: 'Dev User', email: 'dev@example.com' });
+    setLoading(false);
   }, []);
 
   if (loading) return null; // Waits until session check finishes
@@ -63,34 +63,34 @@ function AppRoutes() {
   return (
     <Routes>
       <Route
-        path="/" 
+        path="/"
         element={
           <RequireAuth user={user}>
             <Dashboard user={user} setUser={setUser} />
           </RequireAuth>
-        } 
+        }
       />
       <Route
-        path="/login" 
+        path="/login"
         element={
           <Login user={user} setUser={setUser} />
-        } 
+        }
       />
       <Route
-        path="/policies/:id" 
+        path="/policies/:id"
         element={
           <RequireAuth user={user}>
             <Detail user={user} setUser={setUser} />
           </RequireAuth>
-        } 
+        }
       />
       <Route
-        path="/create" 
+        path="/create"
         element={
           <RequireAuth user={user}>
             <Create user={user} setUser={setUser} />
           </RequireAuth>
-        } 
+        }
       />
       <Route
         path="*"

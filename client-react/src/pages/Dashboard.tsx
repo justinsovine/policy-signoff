@@ -76,10 +76,12 @@ export function DashboardHeader() {
             Track and acknowledge your organization's policies
           </p>
         </div>
-        <Link 
+        <Link
           to="/create"
-          className="inline-flex items-center justify-center h-9 px-3 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-zinc-800 transition-colors whitespace-nowrap">
-          <Plus className="size-4 mr-1" /> Create Policy
+          className="inline-flex items-center justify-center h-9 px-3 bg-zinc-900 text-white text-sm font-medium rounded-lg hover:bg-zinc-800 transition-colors whitespace-nowrap"
+        >
+          <Plus className="size-4 mr-1" />
+          Create Policy
         </Link>
       </div>
     </>
@@ -172,10 +174,10 @@ function PolicyTable({
 
         {tableData.map((policy) => {
           const { statusLabel, statusStyle } = getStatusInfo(policy.signed, policy.overdue);
-          
+
           return(
             <Link
-              key={policy.id} 
+              key={policy.id}
               to={`/policies/${policy.id}`}
               className="grid sm:grid-cols-12 gap-2 sm:gap-4 px-5 py-4 border-b border-zinc-100 hover:bg-zinc-50 transition-colors cursor-pointer items-center"
             >
