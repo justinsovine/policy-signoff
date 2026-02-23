@@ -1,6 +1,8 @@
 import { Plus } from 'lucide-react';
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
+import { api } from '@/api';
 import { MainContainer, NavBar } from "@/components/Global";
 import { Policy as PolicyType, User as UserType } from "@/types";
 import { getStatusInfo } from "@/utils";
@@ -12,53 +14,44 @@ interface DashboardProps {
 
 // Policy list page with summary stats and a table of all policies.
 export function Dashboard({ user, onLogout }: DashboardProps) {
-  // Mock data
-  const tableData: PolicyType[] = [
-    {
-      id: 1,
-      title: '2026 Employee Handbook',
-      due_date: '2026-03-01',
-      created_by: 'Jane Admin',
-      has_file: true,
-      signed: false,
-      overdue: true,
-    },
-    {
-      id: 2,
-      title: 'HIPAA Annual Training',
-      due_date: '2026-03-15',
-      created_by: 'Jane Admin',
-      has_file: true,
-      signed: false,
-      overdue: false,
-    },
-    {
-      id: 3,
-      title: 'Workplace Safety Guidelines',
-      due_date: '2026-04-30',
-      created_by: 'Mike Manager',
-      has_file: false,
-      signed: false,
-      overdue: false,
-    },
-    {
-      id: 4,
-      title: 'Remote Work Policy Update',
-      due_date: '2026-02-10',
-      created_by: 'Jane Admin',
-      has_file: false,
-      signed: true,
-      overdue: false,
-    },
-  ];
+  const [policies, setPolicies] = useState<PolicyType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
+  // Fetch policies data from API
+  useEffect(() => {
+    api<PolicyType[]>('GET', '/api/policies')
+      .then((data) => setPolicies(data))
+      .catch((err) => {
+        if (err.status == 401) {
+          navigate('/login?expired=1');
+        }
+      })
+      .finally(() => setLoading(false));
+  }, [navigate]);
+
+  // Render NavBar during loading state so that layout doesn't jump
+  if (loading) {
+    return (
+      <>
+        <NavBar user={user} onLogout={onLogout} />
+        <MainContainer>
+          <p className="">
+            Loading...
+          </p>
+        </MainContainer>
+      </>
+    )
+  }
+
+  // Main display
   return (
     <>
       <NavBar user={user} onLogout={onLogout} />
       <MainContainer>
         <DashboardHeader />
-        <SummaryStats tableData={tableData} />
-        <PolicyTable tableData={tableData} />
+        <SummaryStats policies={policies} />
+        <PolicyTable policies={policies} />
         <PageFooter />
       </MainContainer>
     </>
@@ -92,14 +85,14 @@ export function DashboardHeader() {
 
 // Stat cards summarizing the policy list.
 function SummaryStats({
-  tableData,
+  policies,
 } : {
-  tableData: PolicyType[];
+  policies: PolicyType[];
 }) {
-  const totalPolicies: number = tableData.length;
-  const overduePolicies: number = tableData.filter((data) => data.overdue === true).length;
-  const pendingPolicies: number = tableData.filter((data) => data.overdue === false && data.signed === false).length;
-  const signedPolicies: number = tableData.filter((data) => data.signed === true).length;
+  const totalPolicies: number = policies.length;
+  const overduePolicies: number = policies.filter((data) => data.overdue === true).length;
+  const pendingPolicies: number = policies.filter((data) => data.overdue === false && data.signed === false).length;
+  const signedPolicies: number = policies.filter((data) => data.signed === true).length;
 
   return(
     <>
@@ -159,9 +152,9 @@ function SummaryStats({
 
 // Policy list table; each row links to the detail page.
 function PolicyTable({
-  tableData,
+  policies,
 } : {
-  tableData: PolicyType[];
+  policies: PolicyType[];
 }) {
 
   return(
@@ -176,7 +169,7 @@ function PolicyTable({
           <div className="col-span-1"></div>
         </div>
 
-        {tableData.map((policy) => {
+        {policies.map((policy) => {
           const { statusLabel, statusStyle } = getStatusInfo(policy.signed, policy.overdue);
 
           return(
@@ -225,7 +218,7 @@ function PageFooter() {
   return(
     <>
       <p className="mt-4 text-xs text-zinc-400">
-        Showing all 4 policies, sorted by due date
+        Showing all policies sorted by due date
       </p>
     </>
   );
