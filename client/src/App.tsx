@@ -1,7 +1,8 @@
 import '@/App.css';
 
 import { ReactNode, useEffect, useRef, useState } from 'react';
-import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
+import ReactGA from 'react-ga4';
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 
 import { api } from '@/api';
 import { Create } from '@/pages/Create';
@@ -39,6 +40,12 @@ function AppRoutes() {
   const wasLoggedIn = useRef(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Send pageview to GA on every route change
+  useEffect(() => {
+    ReactGA.send({ hitType: 'pageview', page: location.pathname });
+  }, [location]);
 
   // Check for existing session so a page refresh doesn't log the user out
   useEffect(() => {
