@@ -1,6 +1,6 @@
 # VPS Setup - One-Time Steps
 
-These steps assume a Linode VPS with NGINX already installed (same host that runs ohiocrashleads.com). SSL is handled by Cloudflare (Flexible mode).
+These steps assume a Linode VPS with NGINX already installed. SSL is terminated upstream (e.g. Cloudflare); NGINX listens on port 80 only.
 
 ## 1. Clone the repo
 
@@ -14,13 +14,32 @@ cd policy-signoff
 
 ```bash
 cp .env.production.example .env.production
-nano .env.production
 ```
 
-Fill in `APP_KEY`, `DB_PASSWORD`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `MINIO_ROOT_PASSWORD`. Generate an app key with:
+Generate the values and fill them in:
 
 ```bash
+# Generate APP_KEY
+docker compose -f docker-compose.prod.yml --env-file .env.production build api
 docker compose -f docker-compose.prod.yml --env-file .env.production run --rm --no-deps api php artisan key:generate --show
+
+# Generate DB_PASSWORD
+openssl rand -base64 24
+
+# Generate MinIO credentials (use the same values for both pairs)
+openssl rand -base64 24   # MINIO_ROOT_USER + AWS_ACCESS_KEY_ID
+openssl rand -base64 24   # MINIO_ROOT_PASSWORD + AWS_SECRET_ACCESS_KEY
+```
+
+Your `.env.production` should look like:
+
+```
+APP_KEY=base64:...
+DB_PASSWORD=<generated>
+MINIO_ROOT_USER=<generated>
+MINIO_ROOT_PASSWORD=<generated>
+AWS_ACCESS_KEY_ID=<same as MINIO_ROOT_USER>
+AWS_SECRET_ACCESS_KEY=<same as MINIO_ROOT_PASSWORD>
 ```
 
 ## 3. Set up host NGINX
@@ -41,24 +60,38 @@ chmod +x deploy.sh
 
 ## 5. Create MinIO bucket
 
-```bash
-# Install mc (MinIO client) if not already installed
-# https://min.io/docs/minio/linux/reference/minio-mc.html
+The MinIO container ships with `mc` built in — no need to install it on the host:
 
-mc alias set policysignoff https://policysignoff-minio.justinsovine.com ACCESS_KEY SECRET_KEY
-mc mb policysignoff/policysignoff
+```bash
+source .env.production
+docker compose -f docker-compose.prod.yml --env-file .env.production exec minio \
+  mc alias set local http://localhost:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
+docker compose -f docker-compose.prod.yml --env-file .env.production exec minio \
+  mc mb local/policysignoff
 ```
 
 ## 6. Seed the database (optional)
 
 ```bash
-docker compose -f docker-compose.prod.yml --env-file .env.production exec api php artisan db:seed
+docker compose -f docker-compose.prod.yml --env-file .env.production exec api php artisan db:seed --force
 ```
 
 ## DNS
 
-Make sure these A records point to the VPS IP (proxied through Cloudflare):
+Create A records pointing to the VPS IP for:
 
 - `policysignoff.justinsovine.com`
 - `policysignoff-api.justinsovine.com`
 - `policysignoff-minio.justinsovine.com`
+
+Subdomains are flat (`policysignoff-api` instead of `api.policysignoff`) so they're covered by a single `*.justinsovine.com` wildcard SSL certificate.*
+
+*\* Two-level-deep subdomains like `api.policysignoff.justinsovine.com` require a separate cert or paid wildcard — flat subdomains avoid this.*
+
+## Subsequent deploys
+
+```bash
+./deploy.sh
+```
+
+The script pulls latest code, rebuilds images, restarts containers, and runs migrations.
