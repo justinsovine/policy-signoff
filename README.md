@@ -20,7 +20,7 @@ Three separate frontend clients consume the same Laravel API, demonstrating the 
 
 | Client | Stack | URL |
 |--------|-------|-----|
-| `client/` | React + Vite + React Router | [policysignoff.justinsovine.com](https://policysignoff.justinsovine.com) |
+| `client/` | React (TypeScript) + Vite + React Router | [policysignoff.justinsovine.com](https://policysignoff.justinsovine.com) |
 | `api/` | Laravel 12 + Sanctum + MinIO | [policysignoff-api.justinsovine.com](https://policysignoff-api.justinsovine.com) |
 
 Auth is cookie-based via Laravel Sanctum (no tokens, no localStorage). The API is fully documented in [`docs/api-spec.md`](docs/api-spec.md).
