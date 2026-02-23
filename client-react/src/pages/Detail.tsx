@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { api } from "@/api";
+import { api, ApiError } from "@/api";
 import { BackLink,MainContainer, NavBar } from "@/components/Global";
 import { PolicyDetail as PolicyDetailType, User as UserType } from "@/types";
 import { formatDate, formatDateTime, getAvatarColor, getInitials, getStatusInfo } from "@/utils";
@@ -13,13 +13,13 @@ interface DetailProps {
 
 // Shows a policy's details and sign-off status.
 export function Detail({ user, onLogout }: DetailProps) {
-  const { id } = useParams<{ id: string }>(); // Get policy ID from URL
+  const { id } = useParams<{ id: string }>(); // policy ID from the route, e.g. /policies/3
   const [policyDetail, setPolicyDetail] = useState<PolicyDetailType>();
   const [loading, setLoading] = useState(true);
-  const [signingOff, setSigningOff] = useState(false);
+  const [signingOff, setSigningOff] = useState(false); // true while POST is in-flight — disables the button
   const navigate = useNavigate();
 
-  // Fetch policy data from API
+  // Load the policy on mount (and if the ID somehow changes)
   useEffect(() => {
     api<PolicyDetailType>('GET', `/api/policies/${id}`)
       .then((data) => setPolicyDetail(data))
@@ -29,16 +29,17 @@ export function Detail({ user, onLogout }: DetailProps) {
       .finally(() => setLoading(false));
   }, [id, navigate]);
 
-  // Sign the policy
   async function handleSignOff() {
     setSigningOff(true);
     try {
       await api('POST', `/api/policies/${id}/signoff`);
-    } catch (err: any) {
-      if (err.status === 401) { navigate('/login?expired=1'); return; }
-      if (err.status !== 409) { setSigningOff(false); return; }
-      // 409 = already signed, fall through to re-fetch
+    } catch (err: unknown) {
+      const e = err as ApiError;
+      if (e.status === 401) { navigate('/login?expired=1'); return; }
+      if (e.status !== 409) { setSigningOff(false); return; } // unexpected error (bail)
+      // 409 means already signed (e.g. double-click race). treat it as success and re-fetch
     }
+    // Re-fetch the full policy so the badge, confirmation box, and table all update together
     api<PolicyDetailType>('GET', `/api/policies/${id}`)
       .then((data) => setPolicyDetail(data))
       .catch((err) => { if (err.status === 401) navigate('/login?expired=1'); })
@@ -87,6 +88,7 @@ function PolicyHeader({ policy, currentUser, onSignOff, signingOff }: PolicyHead
             {policy.title}
           </h1>
           {(policy.signed || policy.overdue) && (
+            // Only show badge for Signed or Overdue
             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap self-start ${statusStyle}`}>
               {statusLabel}
             </span>
@@ -149,6 +151,8 @@ function PolicyHeader({ policy, currentUser, onSignOff, signingOff }: PolicyHead
 
         {/* Sign-off action */}
         {policy.signed ? (() => {
+          // Pull the current user's signed_at from the summary to show in the confirmation box
+          // IIFE (Immediately Invoked Function Expression) used so we can declare signedAt before returning JSX
           const signedAt = policy.signoff_summary.signoffs.find((s) => s.user_id === currentUser?.id)?.signed_at ?? null;
           return (
             <div className="border border-emerald-200 bg-emerald-50 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center gap-3">
@@ -170,7 +174,7 @@ function PolicyHeader({ policy, currentUser, onSignOff, signingOff }: PolicyHead
             <button
               onClick={onSignOff}
               disabled={signingOff}
-              className="w-full h-12 bg-zinc-900 text-white text-sm font-semibold rounded-lg hover:bg-zinc-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full h-12 bg-zinc-900 text-white text-sm font-semibold rounded-lg hover:bg-zinc-800 transition-colors disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
             >
               Sign Off on This Policy
             </button>
@@ -222,13 +226,14 @@ function SignoffSummary({ signoffSummary, currentUser }: SignoffSummaryProps) {
           {signoffSummary.signoffs.map((data) => {
             const isCurrentUser = data.user_id === currentUser?.id;
             const displayName = isCurrentUser ? `${data.user} (You)` : data.user;
-            const initials    = getInitials(data.user);
+            const initials = getInitials(data.user); // always from the real name, not displayName
             const avatarColor = getAvatarColor(data.user);
-            const signed_at   = formatDate(data.signed_at);
-            const signed      = data.signed_at !== null;
+            const signed_at = formatDate(data.signed_at);
+            const signed = data.signed_at !== null;
             const { statusLabel, statusStyle } = getStatusInfo(signed, data.overdue);
 
             return (
+            // Highlight the current user's row so it stands out at a glance
             <div
               key={data.user}
               className={`grid sm:grid-cols-12 gap-2 sm:gap-4 px-5 py-3.5 border-b border-zinc-100 items-center${isCurrentUser ? ' bg-zinc-50/50' : ''}`}

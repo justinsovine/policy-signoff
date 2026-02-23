@@ -7,6 +7,12 @@ function getCookie(name: string): string | null {
     return match ? decodeURIComponent(match[2]) : null;
 }
 
+// Shape of errors thrown by api() — callers can cast caught errors to this
+export interface ApiError {
+  status: number;
+  [key: string]: unknown; // any extra fields from the error response body
+}
+
 // API fetch wrapper using generic type
 // Handles Sanctum auth boilerplate for every request
 export async function api<T>(method: string, path: string, body?: unknown): Promise<T> {
