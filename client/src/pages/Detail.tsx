@@ -29,6 +29,20 @@ export function Detail({ user, onLogout }: DetailProps) {
       .finally(() => setLoading(false));
   }, [id, navigate]);
 
+  // Handles downloading the attached policy document via presigned S3 URL
+  async function handleDownload() {
+    try {
+      const { download_url } = await api<{ download_url: string; file_name: string }>(
+        'GET', `/api/policies/${id}/download-url`
+      );
+      window.open(download_url, '_blank');
+    } catch (err: unknown) {
+      const e = err as ApiError;
+      if (e.status === 401) navigate('/login?expired=1');
+    }
+  }
+
+  // Handles sign-off POST, then re-fetches the policy so all derived UI state updates atomically
   async function handleSignOff() {
     setSigningOff(true);
     try {
@@ -56,6 +70,7 @@ export function Detail({ user, onLogout }: DetailProps) {
         <PolicyHeader
           policy={policyDetail}
           currentUser={user}
+          onDownload={handleDownload}
           onSignOff={handleSignOff}
           signingOff={signingOff}
         />
@@ -71,11 +86,12 @@ export function Detail({ user, onLogout }: DetailProps) {
 interface PolicyHeaderProps {
   policy: PolicyDetailType;
   currentUser: UserType | null;
+  onDownload: () => void;
   onSignOff: () => void;
   signingOff: boolean;
 }
 // Policy info card with the sign-off action.
-function PolicyHeader({ policy, currentUser, onSignOff, signingOff }: PolicyHeaderProps) {
+function PolicyHeader({ policy, currentUser, onDownload, onSignOff, signingOff }: PolicyHeaderProps) {
   const { statusLabel, statusStyle } = getStatusInfo(policy.signed, policy.overdue);
 
   return(
@@ -124,9 +140,10 @@ function PolicyHeader({ policy, currentUser, onSignOff, signingOff }: PolicyHead
         </div>
 
         {/* Download button */}
+        {policy.has_file && (
         <div className="mb-6 pb-6 border-b border-zinc-100">
-          <a
-            href="#"
+          <button
+            onClick={onDownload}
             className="inline-flex items-center gap-2 h-9 px-4 text-sm font-medium text-zinc-700 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors"
           >
             <span className="text-base leading-none">
@@ -136,8 +153,9 @@ function PolicyHeader({ policy, currentUser, onSignOff, signingOff }: PolicyHead
             <span className="text-zinc-400 font-normal">
               -&nbsp; {policy.file_name}
             </span>
-          </a>
+          </button>
         </div>
+        )}
 
         {/* Description */}
         <div className="mb-8">
