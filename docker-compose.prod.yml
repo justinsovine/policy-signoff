@@ -3,6 +3,7 @@
 
 services:
   api:
+    restart: unless-stopped
     build:
       context: ./api
       dockerfile: Dockerfile.prod
@@ -35,6 +36,7 @@ services:
       - policysignoff
 
   client:
+    restart: unless-stopped
     build:
       context: ./client
       dockerfile: Dockerfile.prod
@@ -46,6 +48,7 @@ services:
       - policysignoff
 
   mysql:
+    restart: unless-stopped
     image: mysql:8.0
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
@@ -61,6 +64,7 @@ services:
       - policysignoff
 
   minio:
+    restart: unless-stopped
     image: minio/minio
     ports:
       - "9000:9000"
