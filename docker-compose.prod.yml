@@ -3,11 +3,12 @@
 
 services:
   api:
+    restart: unless-stopped
     build:
       context: ./api
       dockerfile: Dockerfile.prod
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     depends_on:
       mysql:
         condition: service_healthy
@@ -35,17 +36,19 @@ services:
       - policysignoff
 
   client:
+    restart: unless-stopped
     build:
       context: ./client
       dockerfile: Dockerfile.prod
       args:
         VITE_API_URL: https://policysignoff-api.justinsovine.com
     ports:
-      - "3001:80"
+      - "127.0.0.1:3001:80"
     networks:
       - policysignoff
 
   mysql:
+    restart: unless-stopped
     image: mysql:8.0
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
@@ -61,10 +64,11 @@ services:
       - policysignoff
 
   minio:
+    restart: unless-stopped
     image: minio/minio
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
